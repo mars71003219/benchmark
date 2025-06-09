@@ -22,12 +22,12 @@ const ProgressDisplay: React.FC<ProgressDisplayProps> = ({
   const overallProgress = totalVideos > 0 ? (processedVideos / totalVideos) * 100 : 0;
 
   return (
-    <Paper sx={{ p: 2, flexShrink: 0, height: 120, minHeight: 120, maxHeight: 140 }}>
+    <Box>
       <Stack spacing={1.5}>
           {/* 단일 비디오 클립 추론 진행률 */}
           <Box>
               <Typography variant="body2" component="div" color="text.secondary" noWrap title={currentVideo || ''}>
-                  단일 클립 진행률: {currentVideo || '-'}
+                  단일 클립 진행률: {currentVideo || '-'} {currentProgress.toFixed(0)}%
               </Typography>
               <LinearProgress variant="determinate" value={currentProgress || 0} />
           </Box>
@@ -39,7 +39,7 @@ const ProgressDisplay: React.FC<ProgressDisplayProps> = ({
               <LinearProgress variant="determinate" value={overallProgress} />
           </Box>
       </Stack>
-    </Paper>
+    </Box>
   );
 };
 

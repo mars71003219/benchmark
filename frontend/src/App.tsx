@@ -43,7 +43,7 @@ function App() {
     const [classLabels, setClassLabels] = useState<string[]>([]);
     const [videoDuration, setVideoDuration] = useState(0);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [streamMode, setStreamMode] = useState<'realtime' | 'analysis'>('realtime');
+    const [streamMode, setStreamMode] = useState<'realtime' | 'analysis'>('realtime' as const);
     const [resultVideos, setResultVideos] = useState<string[]>([]);
     const [selectedVideo, setSelectedVideo] = useState<string>('');
     const [isPlayerVisible, setPlayerVisible] = useState(true);
@@ -51,6 +51,8 @@ function App() {
     const [uploadedFileCount, setUploadedFileCount] = useState(0);
     const [selectedUploadedFileName, setSelectedUploadedFileName] = useState<string>('');
     const [currentUploadSessionFiles, setCurrentUploadSessionFiles] = useState<string[]>([]);
+    const [isInferring, setIsInferring] = useState<boolean>(false);
+    const [realtimeOverlayFrame, setRealtimeOverlayFrame] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -108,6 +110,38 @@ function App() {
             setPlayerVisible(true);
         }
     }, [streamMode]);
+
+    useEffect(() => {
+        let ws: WebSocket | null = null;
+        if (streamMode === 'realtime') {
+            ws = new WebSocket('ws://localhost:10000/ws/realtime_overlay');
+            ws.onopen = () => {
+                console.log('실시간 오버레이 WebSocket 연결됨');
+            };
+            ws.onmessage = (event) => {
+                setRealtimeOverlayFrame(`data:image/jpeg;base64,${event.data}`);
+            };
+            ws.onerror = (error) => {
+                console.error('실시간 오버레이 WebSocket 오류:', error);
+            };
+            ws.onclose = () => {
+                console.log('실시간 오버레이 WebSocket 연결 해제됨');
+                setRealtimeOverlayFrame(null);
+            };
+        }
+        return () => {
+            if (ws) {
+                ws.close();
+            }
+        };
+    }, [streamMode]);
+
+    // 백엔드의 추론 상태와 isInferring 동기화
+    useEffect(() => {
+        if (inferenceState) {
+            setIsInferring(inferenceState!.is_inferencing);
+        }
+    }, [inferenceState]);
 
     if (!inferenceState) {
         return (
@@ -321,20 +355,44 @@ function App() {
                         </Paper>
                         {/* 추론 설정 */}
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 300 }}>
-                            <Typography variant="h6" sx={{ mb: 1 }}>추론 설정</Typography>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>추론 설정</Typography>
                             {/* 업로드 버튼 2개를 한 줄에 나란히 */}
                             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                                 <Button variant="outlined" component="label" size="small" sx={{ flex: 1, minWidth: 0 }}>Class txt 업로드<input type="file" hidden accept=".txt" onChange={handleClassTxtUpload} /></Button>
                                 <Button variant="outlined" component="label" size="small" sx={{ flex: 1, minWidth: 0 }}>Annotation txt 업로드<input type="file" hidden accept=".txt" onChange={handleAnnoTxtUpload} /></Button>
                             </Box>
-                            <TextField label="샘플링 구간(Frames)" type="number" value={frameInterval} onChange={e => setFrameInterval(Number(e.target.value))} size="small" fullWidth sx={{ mb: 1 }} />
-                            <TextField label="추론 주기(Frames)" type="number" value={inferPeriod} onChange={e => setInferPeriod(Number(e.target.value))} size="small" fullWidth sx={{ mb: 1 }} />
-                            <TextField label="샘플링 프레임(Batch)" type="number" value={batchFrames} onChange={e => setBatchFrames(Number(e.target.value))} size="small" fullWidth sx={{ mb: 1 }} />
-                            <Button variant="contained" fullWidth sx={{ mt: 1, mb: 1 }} onClick={handleStartInference}>추론 실행</Button>
-                            <Button variant="outlined" fullWidth size="small" color="error" onClick={handleStopInference}>추론 중지</Button>
-                            <Box sx={{ mt: 1 }}>
+                            <Grid container spacing={1} sx={{ mb: 1 }}>
+                                <Grid item xs={4}>
+                                    <TextField label="샘플링 구간(Frames)" type="number" value={frameInterval} onChange={e => setFrameInterval(Number(e.target.value))} size="small" fullWidth />
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <TextField label="추론 주기(Frames)" type="number" value={inferPeriod} onChange={e => setInferPeriod(Number(e.target.value))} size="small" fullWidth />
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <TextField label="샘플링 프레임(Batch)" type="number" value={batchFrames} onChange={e => setBatchFrames(Number(e.target.value))} size="small" fullWidth />
+                                </Grid>
+                            </Grid>
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                sx={{ mt: 1, mb: 1 }}
+                                onClick={isInferring ? handleStopInference : handleStartInference}
+                                color={isInferring ? "error" : "primary"}
+                            >
+                                {isInferring ? "추론 중지" : "추론 실행"}
+                            </Button>
+                            <Box sx={{ mt: 0.5 }}>
                                 {classLabels.length > 0 && <Typography variant="caption" color="text.secondary">{classLabels.length}개 클래스</Typography>}
                                 {videoDuration > 0 && <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>비디오 길이: {videoDuration}초</Typography>}
+                            </Box>
+                            <Box sx={{ mt: 0.5 }}>
+                                <ProgressDisplay
+                                    isInferencing={inferenceState.is_inferencing}
+                                    currentVideo={inferenceState.current_video}
+                                    currentProgress={inferenceState.current_progress}
+                                    totalVideos={inferenceState.total_videos}
+                                    processedVideos={inferenceState.processed_videos}
+                                />
                             </Box>
                         </Paper>
                         {/* 시스템 정보 */}
@@ -359,7 +417,7 @@ function App() {
                                 {isPlayerVisible ? (
                                     <Box sx={{ position: 'relative', width: '100%', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 1, overflow: 'hidden' }}>
                                         {streamMode === 'realtime' ? (
-                                            <video ref={videoRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} controls muted />
+                                            <img src={realtimeOverlayFrame || undefined} alt="Realtime Overlay" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
                                         ) : (
                                             selectedVideo ? (
                                                 <video src={selectedVideo} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} controls />
@@ -392,16 +450,6 @@ function App() {
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <Typography variant="h6" gutterBottom>실시간 추론 이벤트</Typography>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
-                        </Paper>
-                        {/* 단일 클립 진행률 / 전체 비디오 진행률 */}
-                        <Paper sx={{ p: 2, flexShrink: 0 }}>
-                            <ProgressDisplay
-                                isInferencing={inferenceState.is_inferencing}
-                                currentVideo={inferenceState.current_video}
-                                currentProgress={inferenceState.current_progress}
-                                totalVideos={inferenceState.total_videos}
-                                processedVideos={inferenceState.processed_videos}
-                            />
                         </Paper>
                     </Grid>
                 </Grid>

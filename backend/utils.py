@@ -32,7 +32,8 @@ def process_video(
     num_frames_to_sample: int,
     progress_callback: Callable[[int, int], None],
     result_callback: Callable[[Dict], None],
-    stop_checker: Callable[[], bool]
+    stop_checker: Callable[[], bool],
+    frame_callback: Callable[[bytes], None]
 ) -> List[Dict]:
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
@@ -93,13 +94,31 @@ def process_video(
 
         except Exception as e:
             print(f"추론 중 에러 발생: {e}")
-            
+
+        # Now, get the frame to draw the overlay on
+        cap.set(cv2.CAP_PROP_POS_FRAMES, current_pos_frame) # Use current_pos_frame for overlay drawing
+        ret, current_frame = cap.read()
+        if ret:
+            if prediction_label != "No Detection": # Only draw if there's an actual prediction
+                label = prediction_label
+                text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.5, 3)
+                text_x = (current_frame.shape[1] - text_size[0]) // 2
+                text_y = 50
+                cv2.putText(current_frame, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+
+            # Encode the frame to JPEG and send it via callback
+            _, buffer = cv2.imencode('.jpg', current_frame)
+            if frame_callback:
+                frame_callback(buffer.tobytes())
+
         current_pos_frame += sliding_window_step_frames
 
         if progress_callback:
-            progress_callback(min(overlay_end_frame, total_frames), total_frames)
+            progress_callback(min(current_pos_frame, total_frames), total_frames)
 
     cap.release()
+    if progress_callback:
+        progress_callback(total_frames, total_frames) # Ensure 100% progress is sent at the end of video processing
     return all_results
 
 def create_overlay_video(video_path: Path, results: List[Dict], output_path: Path):

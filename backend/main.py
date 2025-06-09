@@ -7,12 +7,13 @@ from datetime import datetime
 import asyncio
 import aiofiles
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Callable, Optional
 import functools
 import cv2
 import os
 import subprocess
 import sys
+import base64
 
 import psutil
 from pynvml import *
@@ -21,6 +22,11 @@ from utils import (
     load_model, process_video, create_overlay_video,
     create_results_csv, get_video_info
 )
+
+# Global queues for thread-safe communication between executor thread and main event loop
+# Max size 1 to only keep the latest update/frame
+realtime_frame_queue: asyncio.Queue[bytes] = asyncio.Queue(maxsize=1)
+inference_state_queue: asyncio.Queue[Dict] = asyncio.Queue(maxsize=1)
 
 app = FastAPI()
 app.add_middleware(
@@ -37,6 +43,10 @@ RESULTS_DIR.mkdir(exist_ok=True)
 stop_infer_flag = False
 current_video_info = {}
 model, feature_extractor = None, None
+
+# Global WebSocket connection for real-time overlay frames
+# This is a simplification. For a production app, you'd manage multiple client connections.
+realtime_overlay_websocket: WebSocket | None = None
 
 try:
     nvmlInit()
@@ -55,58 +65,95 @@ def reset_inference_state():
         "current_progress": 0, "events": [], "per_video_progress": {},
         "is_inferencing": False,
     }
+    # Clear queues when state is reset for new inference
+    while not realtime_frame_queue.empty():
+        try: realtime_frame_queue.get_nowait()
+        except asyncio.QueueEmpty: pass
+    while not inference_state_queue.empty():
+        try: inference_state_queue.get_nowait()
+        except asyncio.QueueEmpty: pass
+    # Also push initial state to queue
+    try: inference_state_queue.put_nowait(current_video_info.copy())
+    except asyncio.QueueFull: pass
 
 def stop_checker():
     return stop_infer_flag
 
 # [수정] 이 함수는 이제 동기적으로 실행됨 (run_in_executor에서 호출되므로)
 def process_all_videos_sync(interval, infer_period, batch, save_dir):
-    reset_inference_state()
-    current_video_info["is_inferencing"] = True
-    video_files = sorted([p for p in UPLOAD_DIR.glob('*') if p.suffix in ['.mp4', '.avi', '.mov']])
-    current_video_info["total_videos"] = len(video_files)
-    
-    all_results = []
-    for i, video_path in enumerate(video_files):
-        if stop_checker():
-            current_video_info["events"].append({"type": "stop", "timestamp": datetime.now().isoformat()})
-            break
+    reset_inference_state() # This will now also clear queues and put initial state
+    current_video_info["is_inferencing"] = True # Set to true initially
+    try:
+        # Send initial "is_inferencing: True" state
+        try: inference_state_queue.put_nowait(current_video_info.copy())
+        except asyncio.QueueFull: pass
 
-        current_video_info["current_video"] = video_path.name
-        current_video_info["events"].append({"type": "start", "video": video_path.name, "timestamp": datetime.now().isoformat()})
+        video_files = sorted([p for p in UPLOAD_DIR.glob('*') if p.suffix in ['.mp4', '.avi', '.mov']])
+        current_video_info["total_videos"] = len(video_files)
+        try: inference_state_queue.put_nowait(current_video_info.copy())
+        except asyncio.QueueFull: pass
+        
+        all_results = []
+        for i, video_path in enumerate(video_files):
+            if stop_checker():
+                current_video_info["events"].append({"type": "stop", "timestamp": datetime.now().isoformat()})
+                break
 
-        def progress_callback(done, total):
-            current_video_info["current_progress"] = int(done / total * 100) if total > 0 else 0
+            current_video_info["current_video"] = video_path.name
+            current_video_info["events"].append({"type": "start", "video": video_path.name, "timestamp": datetime.now().isoformat()})
+            try: inference_state_queue.put_nowait(current_video_info.copy())
+            except asyncio.QueueFull: pass
 
-        def result_callback(result: Dict):
-            current_video_info["events"].append({
-                "type": "detection", "video": video_path.name,
-                "timestamp": datetime.now().isoformat(), "data": result
-            })
+            def progress_callback(done, total):
+                current_video_info["current_progress"] = int(done / total * 100) if total > 0 else 0
+                try: inference_state_queue.put_nowait(current_video_info.copy())
+                except asyncio.QueueFull: pass
 
-        try:
-            video_results = process_video(
-                video_path=video_path, model=model, feature_extractor=feature_extractor,
-                sampling_window_frames=interval, sliding_window_step_frames=infer_period,
-                num_frames_to_sample=batch, progress_callback=progress_callback,
-                result_callback=result_callback, stop_checker=stop_checker
-            )
-            all_results.extend(video_results)
-            if video_results:
-                overlay_path = save_dir / f"{video_path.stem}_overlay.mp4"
-                create_overlay_video(video_path, video_results, overlay_path)
-            
-            current_video_info["events"].append({"type": "video_processed", "video": video_path.name, "timestamp": datetime.now().isoformat()})
-            current_video_info["processed_videos"] = i + 1
-        except Exception as e:
-            print(f"비디오 처리 중 에러 발생: {e}")
-            current_video_info["events"].append({"type": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
-            current_video_info["processed_videos"] = i + 1
+            def result_callback(result: Dict):
+                current_video_info["events"].append({
+                    "type": "detection", "video": video_path.name,
+                    "timestamp": datetime.now().isoformat(), "data": result
+                })
+                try: inference_state_queue.put_nowait(current_video_info.copy())
+                except asyncio.QueueFull: pass
 
-    if all_results:
-        create_results_csv(all_results, save_dir / "results.csv")
-    current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
-    current_video_info["is_inferencing"] = False
+            def frame_callback(frame_data: bytes):
+                try:
+                    realtime_frame_queue.put_nowait(frame_data)
+                except asyncio.QueueFull:
+                    pass # Drop frame if consumer is not ready
+
+            try:
+                video_results = process_video(
+                    video_path=video_path, model=model, feature_extractor=feature_extractor,
+                    sampling_window_frames=interval, sliding_window_step_frames=infer_period,
+                    num_frames_to_sample=batch, progress_callback=progress_callback,
+                    result_callback=result_callback, stop_checker=stop_checker,
+                    frame_callback=frame_callback
+                )
+                all_results.extend(video_results)
+                if video_results:
+                    overlay_path = save_dir / f"{video_path.stem}_overlay.mp4"
+                    create_overlay_video(video_path, video_results, overlay_path)
+                
+                current_video_info["events"].append({"type": "video_processed", "video": video_path.name, "timestamp": datetime.now().isoformat()})
+                current_video_info["processed_videos"] = i + 1
+                try: inference_state_queue.put_nowait(current_video_info.copy())
+                except asyncio.QueueFull: pass
+            except Exception as e:
+                print(f"비디오 처리 중 에러 발생: {e}")
+                current_video_info["events"].append({"type": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
+                current_video_info["processed_videos"] = i + 1
+                try: inference_state_queue.put_nowait(current_video_info.copy())
+                except asyncio.QueueFull: pass
+        
+        if all_results:
+            create_results_csv(all_results, save_dir / "results.csv")
+        current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
+    finally:
+        current_video_info["is_inferencing"] = False # Ensure this is always set to False
+        try: inference_state_queue.put_nowait(current_video_info.copy()) # Final state update
+        except asyncio.QueueFull: pass
 
 
 @app.post("/infer")
@@ -175,9 +222,22 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
+            # First, send the current global state (as it might have been updated directly)
             await websocket.send_json(current_video_info)
-            await asyncio.sleep(0.2)
-    except Exception: pass
+            
+            # Then, check for any explicit state updates from the processing thread
+            while not inference_state_queue.empty():
+                try:
+                    latest_state = inference_state_queue.get_nowait()
+                    await websocket.send_json(latest_state)
+                except asyncio.QueueEmpty:
+                    break # No more updates in queue
+
+            await asyncio.sleep(0.2) # Regular polling interval
+    except Exception as e:
+        print(f"Main WebSocket error: {e}")
+    finally:
+        print("Main WebSocket disconnected.")
 
 @app.post("/stop_infer")
 async def stop_infer_endpoint():
@@ -299,6 +359,19 @@ def get_video_metadata(video_path):
     except Exception as e:
         print(f"메타데이터 가져오기 실패: {str(e)}")
         return None
+
+@app.websocket("/ws/realtime_overlay")
+async def websocket_realtime_overlay_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            frame_data = await realtime_frame_queue.get() # Blocking get until a frame is available
+            encoded_frame = base64.b64encode(frame_data).decode('utf-8')
+            await websocket.send_text(encoded_frame)
+    except Exception as e:
+        print(f"실시간 오버레이 WebSocket 오류: {e}")
+    finally:
+        print("실시간 오버레이 WebSocket 연결 종료.")
 
 if __name__ == "__main__":
     import uvicorn
