@@ -301,9 +301,21 @@ async def get_result_videos_endpoint():
 
 @app.get("/video/{video_id}/overlay")
 async def get_overlay_video_endpoint(video_id: str):
-    path = RESULTS_DIR / f"{Path(video_id).stem}_overlay.mp4"
-    if not path.exists(): raise HTTPException(404, "파일 없음")
-    return FileResponse(path)
+    try:
+        path = RESULTS_DIR / f"{Path(video_id).stem}_overlay.mp4"
+        if not path.exists():
+            print(f"비디오 파일을 찾을 수 없음: {path}")
+            raise HTTPException(404, "파일 없음")
+        
+        print(f"비디오 스트리밍 시작: {path}")
+        return FileResponse(
+            path,
+            media_type="video/mp4",
+            filename=path.name
+        )
+    except Exception as e:
+        print(f"비디오 스트리밍 중 에러 발생: {str(e)}")
+        raise HTTPException(500, f"비디오 스트리밍 실패: {str(e)}")
 
 @app.get("/results.csv")
 async def get_results_csv_endpoint():

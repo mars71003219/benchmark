@@ -1,1 +1,5 @@
 node_modules/ 
+results/*.mp4
+results/*.csv
+uploads/*.mp4
+uploads/*.csv 

@@ -53,6 +53,7 @@ function App() {
     const [currentUploadSessionFiles, setCurrentUploadSessionFiles] = useState<string[]>([]);
     const [isInferring, setIsInferring] = useState<boolean>(false);
     const [realtimeOverlayFrame, setRealtimeOverlayFrame] = useState<string | null>(null);
+    const [isAnalysisVideoSelectOpen, setIsAnalysisVideoSelectOpen] = useState(false);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -277,6 +278,45 @@ function App() {
     
     const isAnalysisComplete = inferenceState.events.some(ev => ev.type === 'complete');
     
+    const handleOpenAnalysisVideoSelect = async () => {
+        setStreamMode('analysis');
+        setPlayerVisible(false);
+
+        try {
+            const res = await fetch('http://localhost:10000/results/videos');
+            if (!res.ok) throw new Error('결과 비디오 로딩 실패');
+            const data = await res.json();
+            if (data.videos && Array.isArray(data.videos)) {
+                setResultVideos(data.videos);
+                setIsAnalysisVideoSelectOpen(true);
+            } else {
+                alert('분석된 비디오가 없습니다.');
+                setStreamMode('realtime');
+                setPlayerVisible(true);
+            }
+        } catch (err) {
+            console.error("결과 비디오 로딩 실패:", err);
+            alert("분석 비디오 로딩에 실패했습니다. 백엔드 서버 로그를 확인해 주세요.");
+            setStreamMode('realtime');
+            setPlayerVisible(true);
+        }
+    };
+
+    const handleCloseAnalysisVideoSelect = () => {
+        setIsAnalysisVideoSelectOpen(false);
+        if (!selectedVideo && streamMode === 'analysis') {
+            setStreamMode('realtime');
+        }
+    };
+
+    const handleSelectAnalysisVideo = (videoUrl: string) => {
+        setSelectedVideo(videoUrl);
+        setPlayerVisible(true);
+        setIsAnalysisVideoSelectOpen(false);
+    };
+
+    const selectedVideoUrl = selectedVideo ? `http://localhost:10000/video/${selectedVideo.replace('_overlay.mp4', '')}/overlay` : '';
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -410,7 +450,7 @@ function App() {
                                 <Typography variant="subtitle1">{streamMode === 'realtime' ? '실시간 스트림' : '분석 결과'}</Typography>
                                 <Box>
                                     <Button variant={streamMode === 'realtime' ? 'contained' : 'outlined'} size="small" sx={{ mr: 1 }} onClick={() => setStreamMode('realtime')}>실시간</Button>
-                                    <Button variant={streamMode === 'analysis' ? 'contained' : 'outlined'} size="small" onClick={() => setStreamMode('analysis')}>분석</Button>
+                                    <Button variant={streamMode === 'analysis' ? 'contained' : 'outlined'} size="small" onClick={handleOpenAnalysisVideoSelect}>분석</Button>
                                 </Box>
                             </Box>
                             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
@@ -420,7 +460,15 @@ function App() {
                                             <img src={realtimeOverlayFrame || undefined} alt="Realtime Overlay" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
                                         ) : (
                                             selectedVideo ? (
-                                                <video src={selectedVideo} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} controls />
+                                                <video 
+                                                    src={selectedVideoUrl} 
+                                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} 
+                                                    controls 
+                                                    onError={(e) => {
+                                                        console.error('비디오 로딩 에러:', e);
+                                                        alert('비디오 로딩에 실패했습니다. 서버 로그를 확인해주세요.');
+                                                    }}
+                                                />
                                             ) : (
                                                 <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
                                                     <Typography>분석 비디오를 선택하세요</Typography>
@@ -430,7 +478,7 @@ function App() {
                                     </Box>
                                 ) : (
                                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
-                                        <CircularProgress /> <Typography sx={{ ml: 2 }}>분석 비디오 로딩 중...</Typography>
+                                        <CircularProgress /> <Typography sx={{ ml: 2 }}>비디오 로딩 중...</Typography>
                                     </Box>
                                 )}
                             </Box>
@@ -447,12 +495,33 @@ function App() {
                     {/* 우측: 실시간 추론 이벤트 및 진행률 */}
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', minHeight: 0 }}>
                         {/* 실시간 추론 이벤트 */}
-                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
                             <Typography variant="h6" gutterBottom>실시간 추론 이벤트</Typography>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
                         </Paper>
                     </Grid>
                 </Grid>
+                {/* Analysis Video Selection Dialog */}
+                <Dialog open={isAnalysisVideoSelectOpen} onClose={handleCloseAnalysisVideoSelect} maxWidth="sm" fullWidth>
+                    <DialogTitle>분석 비디오 선택</DialogTitle>
+                    <DialogContent>
+                        {resultVideos.length === 0 ? (
+                            <Typography>분석된 비디오가 없습니다.</Typography>
+                        ) : (
+                            <List>
+                                {resultVideos.map((video, index) => (
+                                    <ListItem button key={index} onClick={() => setSelectedVideo(video)} selected={selectedVideo === video}>
+                                        <ListItemText primary={video.substring(video.lastIndexOf('/') + 1)} />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseAnalysisVideoSelect}>취소</Button>
+                        <Button onClick={() => handleSelectAnalysisVideo(selectedVideo)} color="primary" disabled={!selectedVideo}>재생</Button>
+                    </DialogActions>
+                </Dialog>
             </Container>
         </ThemeProvider>
     );
