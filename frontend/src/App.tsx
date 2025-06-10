@@ -144,6 +144,17 @@ function App() {
         }
     }, [inferenceState]);
 
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.addEventListener('loadedmetadata', () => {
+                console.log('비디오 메타데이터 로드 완료');
+            });
+            videoRef.current.addEventListener('canplay', () => {
+                console.log('비디오 재생 가능');
+            });
+        }
+    }, []);
+
     if (!inferenceState) {
         return (
              <ThemeProvider theme={theme}>
