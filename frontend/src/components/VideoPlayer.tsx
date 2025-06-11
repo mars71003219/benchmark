@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import ReactPlayer from 'react-player';
 import { Box, Typography, Paper } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -8,6 +8,8 @@ interface VideoPlayerProps {
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
+  const playerRef = useRef<ReactPlayer>(null);
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -25,6 +27,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
       >
         {videoUrl ? (
           <ReactPlayer
+            ref={playerRef}
             url={videoUrl}
             width="100%"
             height="100%"
@@ -33,6 +36,30 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
               position: 'absolute',
               top: 0,
               left: 0
+            }}
+            config={{
+              file: {
+                forceVideo: true,
+                attributes: {
+                  controls: true,
+                  preload: 'auto',
+                  crossOrigin: 'anonymous'
+                }
+              }
+            }}
+            onReady={() => {
+              if (playerRef.current) {
+                const videoElement = playerRef.current.getInternalPlayer() as HTMLVideoElement;
+                if (videoElement) {
+                  videoElement.addEventListener('seeking', () => {
+                    const currentTime = videoElement.currentTime;
+                    const duration = videoElement.duration;
+                    if (duration > 0) {
+                      videoElement.currentTime = currentTime;
+                    }
+                  });
+                }
+              }
             }}
           />
         ) : (
@@ -59,4 +86,4 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
   );
 };
 
-export default VideoPlayer; 
+export default VideoPlayer;

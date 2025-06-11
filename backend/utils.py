@@ -73,11 +73,19 @@ def process_video(
             break
 
         try:
+            # 추론 시작 시간 측정
+            inference_start_time = time.time()
+            
             inputs = feature_extractor(batch_frames_rgb, return_tensors="pt").to(device)
             with torch.no_grad():
                 outputs = model(**inputs)
                 predictions = outputs.logits.softmax(dim=-1)
                 prediction_label = get_top_prediction(model, predictions)
+            
+            # 추론 종료 시간 측정 및 처리 속도 계산
+            inference_end_time = time.time()
+            inference_time_ms = (inference_end_time - inference_start_time) * 1000
+            inference_fps = 1000 / inference_time_ms if inference_time_ms > 0 else 0
 
             result = {
                 "video_name": video_path.name,
@@ -85,7 +93,9 @@ def process_video(
                 "end_time": overlay_end_frame / fps,
                 "prediction_label": prediction_label,
                 "start_frame": overlay_start_frame,
-                "end_frame": overlay_end_frame
+                "end_frame": overlay_end_frame,
+                "inference_time_ms": round(inference_time_ms, 2),
+                "inference_fps": round(inference_fps, 2)
             }
             all_results.append(result)
             
@@ -105,6 +115,13 @@ def process_video(
                 text_x = (current_frame.shape[1] - text_size[0]) // 2
                 text_y = 50
                 cv2.putText(current_frame, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+                
+                # 처리 속도와 FPS 표시
+                speed_text = f"{inference_time_ms:.1f}ms ({inference_fps:.1f} FPS)"
+                speed_text_size, _ = cv2.getTextSize(speed_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
+                speed_text_x = (current_frame.shape[1] - speed_text_size[0]) // 2
+                speed_text_y = text_y + 40
+                cv2.putText(current_frame, speed_text, (speed_text_x, speed_text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
 
             # Encode the frame to JPEG and send it via callback
             _, buffer = cv2.imencode('.jpg', current_frame)
@@ -153,6 +170,14 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
             text_x = (width - text_size[0]) // 2
             text_y = 50
             cv2.putText(frame, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+            
+            # 처리 속도와 FPS 표시
+            speed_text = f"{active_result['inference_time_ms']:.1f}ms ({active_result['inference_fps']:.1f} FPS)"
+            speed_text_size, _ = cv2.getTextSize(speed_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
+            speed_text_x = (width - speed_text_size[0]) // 2
+            speed_text_y = text_y + 40
+            cv2.putText(frame, speed_text, (speed_text_x, speed_text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+            
         try:
             proc.stdin.write(frame.tobytes())
         except (IOError, BrokenPipeError):
@@ -167,7 +192,7 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
 def create_results_csv(results: List[Dict], output_path: Path):
     if not results: return
     df = pd.DataFrame(results)
-    df_to_save = df[['video_name', 'start_time', 'end_time', 'prediction_label']]
+    df_to_save = df[['video_name', 'start_time', 'end_time', 'prediction_label', 'inference_time_ms', 'inference_fps']]
     df_to_save.to_csv(output_path, index=False, float_format='%.2f')
 
 def get_video_info(video_path: Path) -> Dict:
