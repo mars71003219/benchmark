@@ -21,6 +21,8 @@ import { useWebSocket } from './hooks/useWebSocket';
 import Hls from 'hls.js';
 import './global.css';
 import { SelectChangeEvent } from '@mui/material';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import ConfusionMatrixDisplay from './components/ConfusionMatrixDisplay';
 
 const theme = createTheme({
     palette: {
@@ -54,6 +56,10 @@ function App() {
     const [isInferring, setIsInferring] = useState<boolean>(false);
     const [realtimeOverlayFrame, setRealtimeOverlayFrame] = useState<string | null>(null);
     const [isAnalysisVideoSelectOpen, setIsAnalysisVideoSelectOpen] = useState(false);
+    const [inferenceMode, setInferenceMode] = useState<'default' | 'AR' | 'AL'>('default');
+    const [annotationData, setAnnotationData] = useState<any>({});
+    const [cumulativeAccuracyHistory, setCumulativeAccuracyHistory] = useState<{ processed_clips: number; accuracy: number; }[]>([]);
+    const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -141,6 +147,17 @@ function App() {
     useEffect(() => {
         if (inferenceState) {
             setIsInferring(inferenceState!.is_inferencing);
+            // Update cumulative accuracy history
+            if (inferenceState.cumulative_accuracy !== undefined && inferenceState.processed_videos !== undefined) {
+                setCumulativeAccuracyHistory(prev => [
+                    ...prev, 
+                    { processed_clips: inferenceState.processed_videos, accuracy: inferenceState.cumulative_accuracy }
+                ]);
+            }
+            // Update metrics history (though we usually just need the latest for confusion matrix display)
+            if (inferenceState.metrics !== undefined) {
+                setMetricsHistory(prev => [...prev, inferenceState.metrics]);
+            }
         }
     }, [inferenceState]);
 
@@ -173,7 +190,12 @@ function App() {
                 body: JSON.stringify({ model_id: id }),
             });
             if (!res.ok) throw new Error('모델 로딩 실패');
+            const data = await res.json();
             setModelId(id); setModelStatus('loaded');
+            // 백엔드에서 클래스 라벨을 직접 가져오도록 설정
+            if (data.class_labels) {
+                setClassLabels(data.class_labels);
+            }
         } catch (error) {
             alert("모델 로딩에 실패했습니다. 백엔드 서버 로그를 확인해 주세요.");
             setModelStatus('none');
@@ -245,28 +267,21 @@ function App() {
         fetch('http://localhost:10000/stop_infer', { method: 'POST' });
     };
 
-    const handleClassTxtUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAnnotationUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                if (event.target) {
-                    const text = event.target.result as string;
-                    setClassLabels(text.split('\n').map(line => line.trim()));
-                }
-            };
-            reader.readAsText(file);
-        }
-    };
-
-    const handleAnnoTxtUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (event.target) {
-                    const text = event.target.result as string;
-                    setVideoDuration(Number(text.split('\n')[0].trim()));
+                try {
+                    const text = event.target?.result as string;
+                    // Assuming JSON format for now. If TXT, additional parsing will be needed.
+                    const parsedData = JSON.parse(text);
+                    setAnnotationData(parsedData);
+                    alert('어노테이션 파일이 성공적으로 로드되었습니다.');
+                } catch (error) {
+                    console.error("어노테이션 파일 파싱 오류:", error);
+                    alert('어노테이션 파일 파싱에 실패했습니다. 유효한 JSON 형식인지 확인해주세요.');
+                    setAnnotationData({});
                 }
             };
             reader.readAsText(file);
@@ -338,6 +353,7 @@ function App() {
                         {/* 모델 로드 */}
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 0, flexShrink: 0, height: 100 }}>
                             {renderModelLoader()}
+
                         </Paper>
                         {/* 비디오 업로드 */}
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 200 }}>
@@ -405,32 +421,77 @@ function App() {
 
                         </Paper>
                         {/* 추론 설정 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 300 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto' }}>
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>추론 설정</Typography>
-                            {/* 업로드 버튼 2개를 한 줄에 나란히 */}
-                            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                                <Button variant="outlined" component="label" size="small" sx={{ flex: 1, minWidth: 0 }}>Class txt 업로드<input type="file" hidden accept=".txt" onChange={handleClassTxtUpload} /></Button>
-                                <Button variant="outlined" component="label" size="small" sx={{ flex: 1, minWidth: 0 }}>Annotation txt 업로드<input type="file" hidden accept=".txt" onChange={handleAnnoTxtUpload} /></Button>
-                            </Box>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
-                                    <TextField label="샘플링 구간(Frames)" type="number" value={frameInterval} onChange={e => setFrameInterval(Number(e.target.value))} size="small" fullWidth />
+                                    <TextField
+                                        label="샘플링 구간(Frames)"
+                                        type="number"
+                                        value={frameInterval}
+                                        onChange={(e) => setFrameInterval(Number(e.target.value))}
+                                        size="small"
+                                        fullWidth
+                                    />
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <TextField label="추론 주기(Frames)" type="number" value={inferPeriod} onChange={e => setInferPeriod(Number(e.target.value))} size="small" fullWidth />
+                                    <TextField
+                                        label="추론 주기(Frames)"
+                                        type="number"
+                                        value={inferPeriod}
+                                        onChange={(e) => setInferPeriod(Number(e.target.value))}
+                                        size="small"
+                                        fullWidth
+                                    />
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <TextField label="샘플링 프레임(Batch)" type="number" value={batchFrames} onChange={e => setBatchFrames(Number(e.target.value))} size="small" fullWidth />
+                                    <TextField
+                                        label="샘플링 프레임(Batch)"
+                                        type="number"
+                                        value={batchFrames}
+                                        onChange={(e) => setBatchFrames(Number(e.target.value))}
+                                        size="small"
+                                        fullWidth
+                                    />
+                                </Grid>
+                            </Grid>
+                            <Grid container spacing={1} sx={{ mb: 2 }}>
+                                <Grid item xs={4}>
+                                    <Button 
+                                        variant={inferenceMode === 'AR' ? 'contained' : 'outlined'} 
+                                        size="small" 
+                                        onClick={() => setInferenceMode('AR')}
+                                        fullWidth
+                                    >
+                                        AR
+                                    </Button>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Button 
+                                        variant={inferenceMode === 'AL' ? 'contained' : 'outlined'} 
+                                        size="small" 
+                                        onClick={() => setInferenceMode('AL')}
+                                        fullWidth
+                                    >
+                                        AL
+                                    </Button>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Button variant="outlined" component="label" size="small" fullWidth>
+                                       Anno. Upload 
+                                        <input type="file" hidden accept=".json,.txt" onChange={handleAnnotationUpload} />
+                                    </Button>
                                 </Grid>
                             </Grid>
                             <Button
-                                variant="contained"
+                                variant={isInferring ? 'contained' : 'contained'}
+                                onClick={isInferring ? handleStopInference : handleStartInference}
+                                disabled={!modelId || uploadedFiles.length === 0}
+                                color={isInferring ? 'error' : 'primary'}
                                 fullWidth
                                 sx={{ mt: 1, mb: 1 }}
-                                onClick={isInferring ? handleStopInference : handleStartInference}
-                                color={isInferring ? "error" : "primary"}
                             >
-                                {isInferring ? "추론 중지" : "추론 실행"}
+                                {isInferring ? '추론 중지' : '추론 실행'}
                             </Button>
                             <Box sx={{ mt: 0.5 }}>
                                 {classLabels.length > 0 && <Typography variant="caption" color="text.secondary">{classLabels.length}개 클래스</Typography>}
@@ -455,38 +516,42 @@ function App() {
                     </Grid>
                     {/* 중앙: 실시간/분석 스트림 및 그래프 */}
                     <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
-                        {/* 실시간/분석 토글 및 비디오 재생 */}
-                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                <Typography variant="subtitle1">{streamMode === 'realtime' ? '실시간 스트림' : '분석 결과'}</Typography>
+                        {/* 실시간/분석 토글 및 비디오 재생 - 높이 고정 */}
+                        <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', p: 0 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, pt: 2, pb: 2 }}>
+                                <Typography variant="subtitle1" color="white">{streamMode === 'realtime' ? '실시간 스트림' : '분석 결과'}</Typography>
                                 <Box>
                                     <Button variant={streamMode === 'realtime' ? 'contained' : 'outlined'} size="small" sx={{ mr: 1 }} onClick={() => setStreamMode('realtime')}>실시간</Button>
                                     <Button variant={streamMode === 'analysis' ? 'contained' : 'outlined'} size="small" onClick={handleOpenAnalysisVideoSelect}>분석</Button>
                                 </Box>
                             </Box>
-                            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                            <Box sx={{ width: '640px', height: '360px', mx: 'auto', mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                 {isPlayerVisible ? (
-                                    <Box sx={{ position: 'relative', width: '100%', paddingTop: '56.25%', bgcolor: 'black', borderRadius: 1, overflow: 'hidden' }}>
-                                        {streamMode === 'realtime' ? (
-                                            <img src={realtimeOverlayFrame || undefined} alt="Realtime Overlay" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                                    streamMode === 'realtime' ? (
+                                        realtimeOverlayFrame ? (
+                                            <img src={realtimeOverlayFrame} alt="Realtime Overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                         ) : (
-                                            selectedVideo ? (
-                                                <video 
-                                                    src={selectedVideoUrl} 
-                                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }} 
-                                                    controls 
-                                                    onError={(e) => {
-                                                        console.error('비디오 로딩 에러:', e);
-                                                        alert('비디오 로딩에 실패했습니다. 서버 로그를 확인해주세요.');
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
-                                                    <Typography>분석 비디오를 선택하세요</Typography>
-                                                </Box>
-                                            )
-                                        )}
-                                    </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
+                                                <CircularProgress /> <Typography sx={{ ml: 2 }}>실시간 스트림 로딩 중...</Typography>
+                                            </Box>
+                                        )
+                                    ) : (
+                                        selectedVideo ? (
+                                            <video 
+                                                src={selectedVideoUrl} 
+                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                                                controls 
+                                                onError={(e) => {
+                                                    console.error('비디오 로딩 에러:', e);
+                                                    alert('비디오 로딩에 실패했습니다. 서버 로그를 확인해주세요.');
+                                                }}
+                                            />
+                                        ) : (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
+                                                <Typography>분석 비디오를 선택하세요</Typography>
+                                            </Box>
+                                        )
+                                    )
                                 ) : (
                                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
                                         <CircularProgress /> <Typography sx={{ ml: 2 }}>비디오 로딩 중...</Typography>
@@ -494,21 +559,36 @@ function App() {
                                 )}
                             </Box>
                         </Paper>
-                        {/* 비디오 추론 이벤트 그래프 */}
-                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <Typography variant="h6" gutterBottom>비디오 추론 이벤트 그래프</Typography>
-                            {/* 실제 그래프 컴포넌트 */}
-                            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
-                                <VideoInferenceChart events={inferenceState.events} classLabels={classLabels} videoDuration={videoDuration} />
-                            </Box>
+                        {/* 비디오 추론 이벤트 그래프 - 2개 열로 나눔 */}
+                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>비디오 추론 이벤트 그래프</Typography>
+                            <Grid container spacing={2} sx={{ flexGrow: 1 }}>
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography variant="subtitle2" gutterBottom>누적 정확도 그래프</Typography>
+                                    <VideoInferenceChart events={inferenceState.events} classLabels={classLabels} videoDuration={videoDuration} cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
+                                </Grid>
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography variant="subtitle2" gutterBottom>PR 커브 그래프 (개발 예정)</Typography>
+                                    {/* Placeholder for PR Curve component */}
+                                    <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#eee', borderRadius: 1 }}>
+                                        <Typography variant="body2" color="text.secondary">PR 커브 그래프 영역</Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
                         </Paper>
                     </Grid>
-                    {/* 우측: 실시간 추론 이벤트 및 진행률 */}
+
+                    {/* 우측: 실시간 추론 이벤트 및 실시간 추론 메트릭 */}
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', minHeight: 0 }}>
                         {/* 실시간 추론 이벤트 */}
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
                             <Typography variant="h6" gutterBottom>실시간 추론 이벤트</Typography>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
+                        </Paper>
+                        {/* 실시간 추론 메트릭 (중앙에서 이동) */}
+                        <Paper sx={{ p: 2, flexGrow: 0, display: 'flex', flexDirection: 'column', mt: 2 }}>
+                            <Typography variant="h6" gutterBottom>실시간 추론 메트릭</Typography>
+                            <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
                         </Paper>
                     </Grid>
                 </Grid>

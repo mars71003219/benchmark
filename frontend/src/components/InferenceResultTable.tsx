@@ -28,10 +28,14 @@ const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, cla
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              <TableCell>비디오 클립</TableCell>
-              <TableCell align="right">시작(초)</TableCell>
-              <TableCell align="right">종료(초)</TableCell>
-              <TableCell>이벤트</TableCell>
+              <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>비디오 클립</TableCell>
+              <TableCell align="right" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>시작(초)</TableCell>
+              <TableCell align="right" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>종료(초)</TableCell>
+              <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>이벤트</TableCell>
+              <TableCell align="right" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>시작 프레임</TableCell>
+              <TableCell align="right" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>종료 프레임</TableCell>
+              <TableCell align="right" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>추론 시간</TableCell>
+              <TableCell align="right" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>추론 FPS</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -43,12 +47,16 @@ const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, cla
                   <TableCell align="right">{event.data.start_time.toFixed(2)}</TableCell>
                   <TableCell align="right">{event.data.end_time.toFixed(2)}</TableCell>
                   <TableCell>{predictionLabel}</TableCell>
+                  <TableCell align="right">{event.data.start_frame}</TableCell>
+                  <TableCell align="right">{event.data.end_frame}</TableCell>
+                  <TableCell align="right">{event.data.inference_time_ms}</TableCell>
+                  <TableCell align="right">{event.data.inference_fps}</TableCell>
                 </TableRow>
               );
             })}
             {detectionEvents.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} align="center">추론 이벤트를 기다리는 중...</TableCell>
+                <TableCell colSpan={8} align="center">추론 이벤트를 기다리는 중...</TableCell>
               </TableRow>
             )}
           </TableBody>

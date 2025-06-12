@@ -48,6 +48,14 @@ model, feature_extractor = None, None
 # This is a simplification. For a production app, you'd manage multiple client connections.
 realtime_overlay_websocket: WebSocket | None = None
 
+# Global counters for metrics (they are reset in reset_inference_state)
+global_tp = 0
+global_tn = 0
+global_fp = 0
+global_fn = 0
+global_total_processed_clips = 0
+global_correct_predictions = 0
+
 try:
     nvmlInit()
 except NVMLError: pass
@@ -58,13 +66,22 @@ def shutdown_event():
     except NVMLError: pass
 
 def reset_inference_state():
-    global current_video_info, stop_infer_flag
+    global current_video_info, stop_infer_flag, global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
     stop_infer_flag = False
     current_video_info = {
         "total_videos": 0, "processed_videos": 0, "current_video": None,
         "current_progress": 0, "events": [], "per_video_progress": {},
         "is_inferencing": False,
+        "cumulative_accuracy": 0.0, # New field
+        "metrics": {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "precision": 0.0, "recall": 0.0, "f1_score": 0.0}, # New field
     }
+    # Reset global counters too
+    global_tp = 0
+    global_tn = 0
+    global_fp = 0
+    global_fn = 0
+    global_total_processed_clips = 0
+    global_correct_predictions = 0
     # Clear queues when state is reset for new inference
     while not realtime_frame_queue.empty():
         try: realtime_frame_queue.get_nowait()
@@ -80,8 +97,9 @@ def stop_checker():
     return stop_infer_flag
 
 # [수정] 이 함수는 이제 동기적으로 실행됨 (run_in_executor에서 호출되므로)
-def process_all_videos_sync(interval, infer_period, batch, save_dir):
-    reset_inference_state() # This will now also clear queues and put initial state
+def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict):
+    global global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
+    reset_inference_state() # This will also reset global counters
     current_video_info["is_inferencing"] = True # Set to true initially
     try:
         # Send initial "is_inferencing: True" state
@@ -104,12 +122,84 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir):
             try: inference_state_queue.put_nowait(current_video_info.copy())
             except asyncio.QueueFull: pass
 
+            # Get annotations for the current video
+            current_video_name = video_path.name
+            video_annotations_for_current_video = annotation_data.get(current_video_name, {})
+
             def progress_callback(done, total):
                 current_video_info["current_progress"] = int(done / total * 100) if total > 0 else 0
                 try: inference_state_queue.put_nowait(current_video_info.copy())
                 except asyncio.QueueFull: pass
 
             def result_callback(result: Dict):
+                global global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
+
+                is_correct_segment_prediction = False
+
+                if inference_mode == "AR":
+                    if "AR" in video_annotations_for_current_video:
+                        gt_label = video_annotations_for_current_video["AR"].get("label")
+                        if gt_label:
+                            if result["prediction_label"] == gt_label:
+                                is_correct_segment_prediction = True
+
+                            if gt_label == "fight": # Assuming 'fight' is the positive class
+                                if result["prediction_label"] == "fight": global_tp += 1
+                                else: global_fn += 1
+                            elif gt_label == "nonfight":
+                                if result["prediction_label"] == "nonfight": global_tn += 1
+                                else: global_fp += 1
+                        
+                elif inference_mode == "AL":
+                    if "AL" in video_annotations_for_current_video:
+                        anno_segments = video_annotations_for_current_video["AL"]
+                        current_seg_start = result["start_frame"]
+                        current_seg_end = result["end_frame"]
+
+                        matched_anno_label = None
+                        
+                        for anno_seg in anno_segments:
+                            anno_label = anno_seg["label"]
+                            anno_start = anno_seg["start_frame"]
+                            anno_end = anno_seg["end_frame"]
+
+                            if max(current_seg_start, anno_start) < min(current_seg_end, anno_end): # Overlap
+                                matched_anno_label = anno_label
+                                break
+
+                        if matched_anno_label:
+                            if result["prediction_label"] == matched_anno_label:
+                                is_correct_segment_prediction = True
+                            
+                            if matched_anno_label == "fight":
+                                if result["prediction_label"] == "fight": global_tp += 1
+                                else: global_fn += 1
+                            elif matched_anno_label == "nonfight":
+                                if result["prediction_label"] == "nonfight": global_tn += 1
+                                else: global_fp += 1
+                        else: # No annotation for this inferred segment, assume default is 'nonfight'
+                            if result["prediction_label"] == "nonfight":
+                                global_tn += 1 # True Negative if prediction is 'nonfight' and no annotation matches
+                            else:
+                                global_fp += 1 # False Positive if prediction is 'fight' and no annotation matches
+
+                global_total_processed_clips += 1
+                if is_correct_segment_prediction:
+                    global_correct_predictions += 1
+                
+                # Update cumulative accuracy and metrics
+                if global_total_processed_clips > 0:
+                    current_video_info["cumulative_accuracy"] = global_correct_predictions / global_total_processed_clips
+                
+                precision = global_tp / (global_tp + global_fp) if (global_tp + global_fp) > 0 else 0.0
+                recall = global_tp / (global_tp + global_fn) if (global_tp + global_fn) > 0 else 0.0
+                f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+
+                current_video_info["metrics"] = {
+                    "tp": global_tp, "tn": global_tn, "fp": global_fp, "fn": global_fn,
+                    "precision": round(precision, 2), "recall": round(recall, 2), "f1_score": round(f1_score, 2)
+                }
+
                 current_video_info["events"].append({
                     "type": "detection", "video": video_path.name,
                     "timestamp": datetime.now().isoformat(), "data": result
@@ -129,7 +219,11 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir):
                     sampling_window_frames=interval, sliding_window_step_frames=infer_period,
                     num_frames_to_sample=batch, progress_callback=progress_callback,
                     result_callback=result_callback, stop_checker=stop_checker,
-                    frame_callback=frame_callback
+                    frame_callback=frame_callback,
+                    # AR/AL logic moved to result_callback based on `inference_mode` and `annotation_data`
+                    # No need to pass these to process_video directly for now
+                    # inference_mode=inference_mode,
+                    # annotation_data=annotation_data
                 )
                 all_results.extend(video_results)
                 if video_results:
@@ -166,11 +260,13 @@ async def start_inference_endpoint(request: Request):
     interval = data.get("interval", 90)
     infer_period = data.get("infer_period", 30)
     batch = data.get("batch", 16)
+    inference_mode = data.get("inference_mode", "default") # 'AR' or 'AL'
+    annotation_data = data.get("annotation_data", {}) # Annotation data from frontend
     
     # [핵심 수정] 이벤트 루프를 막지 않기 위해 별도 스레드에서 동기 함수 실행
     loop = asyncio.get_event_loop()
     # functools.partial을 사용해 함수에 인자 전달
-    func = functools.partial(process_all_videos_sync, interval, infer_period, batch, RESULTS_DIR)
+    func = functools.partial(process_all_videos_sync, interval, infer_period, batch, RESULTS_DIR, inference_mode, annotation_data)
     # 별도 스레드에서 작업 실행
     await loop.run_in_executor(None, func)
     
@@ -307,11 +403,18 @@ async def get_overlay_video_endpoint(video_id: str):
             print(f"비디오 파일을 찾을 수 없음: {path}")
             raise HTTPException(404, "파일 없음")
         
+        # Get file size to set Content-Length header
+        file_size = os.path.getsize(path)
+
         print(f"비디오 스트리밍 시작: {path}")
         return FileResponse(
             path,
             media_type="video/mp4",
-            filename=path.name
+            filename=path.name,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(file_size)
+            }
         )
     except Exception as e:
         print(f"비디오 스트리밍 중 에러 발생: {str(e)}")

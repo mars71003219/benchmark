@@ -110,18 +110,48 @@ def process_video(
         ret, current_frame = cap.read()
         if ret:
             if prediction_label != "No Detection": # Only draw if there's an actual prediction
-                label = prediction_label
-                text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.5, 3)
-                text_x = (current_frame.shape[1] - text_size[0]) // 2
-                text_y = 50
-                cv2.putText(current_frame, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
-                
-                # 처리 속도와 FPS 표시
+                # 오버레이 텍스트 설정
+                label_text = prediction_label
                 speed_text = f"{inference_time_ms:.1f}ms ({inference_fps:.1f} FPS)"
-                speed_text_size, _ = cv2.getTextSize(speed_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
-                speed_text_x = (current_frame.shape[1] - speed_text_size[0]) // 2
-                speed_text_y = text_y + 40
-                cv2.putText(current_frame, speed_text, (speed_text_x, speed_text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+
+                # 폰트 및 스케일
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                label_font_scale = 0.7
+                speed_font_scale = 0.5
+                thickness = 2
+
+                # 텍스트 크기 계산
+                label_size, _ = cv2.getTextSize(label_text, font, label_font_scale, thickness)
+                speed_size, _ = cv2.getTextSize(speed_text, font, speed_font_scale, thickness)
+
+                # 여백 설정
+                margin_x = 20
+                margin_y = 20
+                line_spacing = 10
+
+                # 라벨 위치 계산 (우측 상단)
+                label_x = current_frame.shape[1] - label_size[0] - margin_x
+                label_y = margin_y + label_size[1]
+
+                # 속도 텍스트 위치 계산 (라벨 아래)
+                speed_x = current_frame.shape[1] - speed_size[0] - margin_x
+                speed_y = label_y + line_spacing + speed_size[1]
+
+                # 배경 박스 그리기 (약간의 투명도를 주기 위해 더 복잡한 로직이 필요하지만, 여기서는 단순한 사각형)
+                # (투명한 배경을 위한 간단한 방법은 아래와 같습니다.)
+                overlay = current_frame.copy()
+                alpha = 0.6 # 투명도
+
+                # 라벨 배경
+                cv2.rectangle(overlay, (label_x - 5, label_y - label_size[1] - 5), (label_x + label_size[0] + 5, label_y + 5), (0, 0, 0), -1)
+                # 속도 텍스트 배경
+                cv2.rectangle(overlay, (speed_x - 5, speed_y - speed_size[1] - 5), (speed_x + speed_size[0] + 5, speed_y + 5), (0, 0, 0), -1)
+
+                cv2.addWeighted(overlay, alpha, current_frame, 1 - alpha, 0, current_frame)
+
+                # 텍스트 그리기
+                cv2.putText(current_frame, label_text, (label_x, label_y), font, label_font_scale, (0, 255, 0), thickness, cv2.LINE_AA)
+                cv2.putText(current_frame, speed_text, (speed_x, speed_y), font, speed_font_scale, (0, 255, 255), thickness, cv2.LINE_AA)
 
             # Encode the frame to JPEG and send it via callback
             _, buffer = cv2.imencode('.jpg', current_frame)
@@ -149,7 +179,7 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
     ffmpeg_cmd = [
         'ffmpeg', '-y', '-f', 'rawvideo', '-vcodec', 'rawvideo',
         '-pix_fmt', 'bgr24', '-s', f'{width}x{height}', '-r', str(fps), '-i', '-',
-        '-c:v', 'libopenh264', '-pix_fmt', 'yuv420p', str(output_path)
+        '-c:v', 'libopenh264', '-pix_fmt', 'yuv420p', '-movflags', 'faststart', str(output_path)
     ]
     
     proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -166,18 +196,48 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
                     break
         if active_result:
             label = active_result['prediction_label']
-            text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.5, 3)
-            text_x = (width - text_size[0]) // 2
-            text_y = 50
-            cv2.putText(frame, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
-            
-            # 처리 속도와 FPS 표시
+            # 오버레이 텍스트 설정
+            label_text = active_result['prediction_label']
             speed_text = f"{active_result['inference_time_ms']:.1f}ms ({active_result['inference_fps']:.1f} FPS)"
-            speed_text_size, _ = cv2.getTextSize(speed_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
-            speed_text_x = (width - speed_text_size[0]) // 2
-            speed_text_y = text_y + 40
-            cv2.putText(frame, speed_text, (speed_text_x, speed_text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
-            
+
+            # 폰트 및 스케일
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            label_font_scale = 0.7
+            speed_font_scale = 0.5
+            thickness = 2
+
+            # 텍스트 크기 계산
+            label_size, _ = cv2.getTextSize(label_text, font, label_font_scale, thickness)
+            speed_size, _ = cv2.getTextSize(speed_text, font, speed_font_scale, thickness)
+
+            # 여백 설정
+            margin_x = 20
+            margin_y = 20
+            line_spacing = 10
+
+            # 라벨 위치 계산 (우측 상단)
+            label_x = width - label_size[0] - margin_x
+            label_y = margin_y + label_size[1]
+
+            # 속도 텍스트 위치 계산 (라벨 아래)
+            speed_x = width - speed_size[0] - margin_x
+            speed_y = label_y + line_spacing + speed_size[1]
+
+            # 배경 박스 그리기 (약간의 투명도를 주기 위해 더 복잡한 로직이 필요하지만, 여기서는 단순한 사각형)
+            overlay_frame = frame.copy()
+            alpha = 0.6 # 투명도
+
+            # 라벨 배경
+            cv2.rectangle(overlay_frame, (label_x - 5, label_y - label_size[1] - 5), (label_x + label_size[0] + 5, label_y + 5), (0, 0, 0), -1)
+            # 속도 텍스트 배경
+            cv2.rectangle(overlay_frame, (speed_x - 5, speed_y - speed_size[1] - 5), (speed_x + speed_size[0] + 5, speed_y + 5), (0, 0, 0), -1)
+
+            cv2.addWeighted(overlay_frame, alpha, frame, 1 - alpha, 0, frame)
+
+            # 텍스트 그리기
+            cv2.putText(frame, label_text, (label_x, label_y), font, label_font_scale, (0, 255, 0), thickness, cv2.LINE_AA)
+            cv2.putText(frame, speed_text, (speed_x, speed_y), font, speed_font_scale, (0, 255, 255), thickness, cv2.LINE_AA)
+
         try:
             proc.stdin.write(frame.tobytes())
         except (IOError, BrokenPipeError):
@@ -192,7 +252,7 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
 def create_results_csv(results: List[Dict], output_path: Path):
     if not results: return
     df = pd.DataFrame(results)
-    df_to_save = df[['video_name', 'start_time', 'end_time', 'prediction_label', 'inference_time_ms', 'inference_fps']]
+    df_to_save = df[['video_name', 'start_time', 'end_time', 'prediction_label', 'start_frame', 'end_frame', 'inference_time_ms', 'inference_fps']]
     df_to_save.to_csv(output_path, index=False, float_format='%.2f')
 
 def get_video_info(video_path: Path) -> Dict:

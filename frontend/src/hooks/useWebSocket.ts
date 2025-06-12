@@ -20,6 +20,16 @@ export interface InferenceState {
   events: InferenceEvent[];
   per_video_progress: { [key: string]: number };
   is_inferencing: boolean;
+  cumulative_accuracy: number;
+  metrics: {
+    tp: number;
+    tn: number;
+    fp: number;
+    fn: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+  };
 }
 
 // 훅의 기본 상태값
@@ -31,6 +41,8 @@ const initialState: InferenceState = {
   events: [],
   per_video_progress: {},
   is_inferencing: false,
+  cumulative_accuracy: 0.0,
+  metrics: { tp: 0, tn: 0, fp: 0, fn: 0, precision: 0.0, recall: 0.0, f1_score: 0.0 },
 };
 
 // 이제 훅은 연결 중일 때 null을 반환할 수 있음
