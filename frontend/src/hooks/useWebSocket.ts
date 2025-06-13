@@ -47,17 +47,25 @@ const initialState: InferenceState = {
 
 // 이제 훅은 연결 중일 때 null을 반환할 수 있음
 export const useWebSocket = (url: string): InferenceState | null => {
-  const [data, setData] = useState<InferenceState | null>(null); // 초기 상태를 null로 변경
+  const [data, setData] = useState<InferenceState | null>(null);
   const ws = useRef<WebSocket | null>(null);
+  const reconnectTimeout = useRef<NodeJS.Timeout>();
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
+  const baseDelay = 1000; // 1초
 
-  useEffect(() => {
-    const connect = () => {
+  const connect = () => {
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    try {
       ws.current = new WebSocket(url);
 
       ws.current.onopen = () => {
         console.log("WebSocket connected");
-        // 연결 성공 시 초기 상태로 설정
-        setData(initialState); 
+        reconnectAttempts.current = 0;
+        setData(initialState);
       };
 
       ws.current.onmessage = (event) => {
@@ -73,18 +81,39 @@ export const useWebSocket = (url: string): InferenceState | null => {
         console.error("WebSocket error:", error);
       };
 
-      ws.current.onclose = () => {
-        console.log("WebSocket disconnected, attempting to reconnect...");
-        setData(null); // 연결 종료 시 다시 null로 설정
-        setTimeout(connect, 3000);
-      };
-    };
+      ws.current.onclose = (event) => {
+        console.log(`WebSocket disconnected (code: ${event.code}, reason: ${event.reason})`);
+        setData(null);
 
+        // 정상적인 종료가 아닌 경우에만 재연결 시도
+        if (event.code !== 1000 && event.code !== 1001) {
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            const delay = baseDelay * Math.pow(2, reconnectAttempts.current);
+            console.log(`Attempting to reconnect in ${delay}ms... (Attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+            
+            reconnectTimeout.current = setTimeout(() => {
+              reconnectAttempts.current += 1;
+              connect();
+            }, delay);
+          } else {
+            console.error("Max reconnection attempts reached");
+          }
+        }
+      };
+    } catch (error) {
+      console.error("Failed to create WebSocket connection:", error);
+    }
+  };
+
+  useEffect(() => {
     connect();
 
     return () => {
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
       if (ws.current) {
-        ws.current.onclose = null; // 재연결 로직 방지
+        ws.current.onclose = null;
         ws.current.close();
       }
     };

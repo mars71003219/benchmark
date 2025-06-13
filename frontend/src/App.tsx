@@ -60,6 +60,7 @@ function App() {
     const [annotationData, setAnnotationData] = useState<any>({});
     const [cumulativeAccuracyHistory, setCumulativeAccuracyHistory] = useState<{ processed_clips: number; accuracy: number; }[]>([]);
     const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
+    const [isConnected, setIsConnected] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -143,23 +144,26 @@ function App() {
         };
     }, [streamMode]);
 
+    // WebSocket 연결 상태 관리
+    useEffect(() => {
+        setIsConnected(inferenceState !== null);
+    }, [inferenceState]);
+
     // 백엔드의 추론 상태와 isInferring 동기화
     useEffect(() => {
-        if (inferenceState) {
-            setIsInferring(inferenceState!.is_inferencing);
-            // Update cumulative accuracy history
+        if (inferenceState && isConnected) {
+            setIsInferring(inferenceState.is_inferencing);
             if (inferenceState.cumulative_accuracy !== undefined && inferenceState.processed_videos !== undefined) {
                 setCumulativeAccuracyHistory(prev => [
                     ...prev, 
                     { processed_clips: inferenceState.processed_videos, accuracy: inferenceState.cumulative_accuracy }
                 ]);
             }
-            // Update metrics history (though we usually just need the latest for confusion matrix display)
             if (inferenceState.metrics !== undefined) {
                 setMetricsHistory(prev => [...prev, inferenceState.metrics]);
             }
         }
-    }, [inferenceState]);
+    }, [inferenceState, isConnected]);
 
     useEffect(() => {
         if (videoRef.current) {
@@ -172,11 +176,12 @@ function App() {
         }
     }, []);
 
-    if (!inferenceState) {
+    if (!isConnected) {
         return (
-             <ThemeProvider theme={theme}>
+            <ThemeProvider theme={theme}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                    <CircularProgress /> <Typography sx={{ ml: 2 }}>서버와 연결 중...</Typography>
+                    <CircularProgress /> 
+                    <Typography sx={{ ml: 2 }}>서버와 연결 중...</Typography>
                 </Box>
             </ThemeProvider>
         );
@@ -256,11 +261,46 @@ function App() {
         setSelectedUploadedFileName(event.target.value as string);
     };
 
-    const handleStartInference = () => {
-        fetch('http://localhost:10000/infer', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ interval: frameInterval, infer_period: inferPeriod, batch: batchFrames }),
-        });
+    const handleStartInference = async () => {
+        if (!isConnected || !inferenceState) {
+            alert("서버와 연결이 끊어졌습니다. 페이지를 새로고침해주세요.");
+            return;
+        }
+
+        if (!modelId) {
+            alert("모델이 로드되지 않았습니다. 모델을 먼저 로드해주세요.");
+            return;
+        }
+
+        if (uploadedFiles.length === 0) {
+            alert("업로드된 비디오가 없습니다. 비디오를 먼저 업로드해주세요.");
+            return;
+        }
+
+        if (isInferring) {
+            alert("이미 추론이 진행 중입니다.");
+            return;
+        }
+
+        try {
+            const res = await fetch('http://localhost:10000/infer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    interval: frameInterval,
+                    infer_period: inferPeriod,
+                    batch: batchFrames,
+                    inference_mode: inferenceMode,
+                    annotation_data: annotationData
+                }),
+            });
+            if (!res.ok) throw new Error('추론 시작 실패');
+            const data = await res.json();
+            console.log("추론 시작됨:", data);
+        } catch (error) {
+            console.error("추론 시작 오류:", error);
+            alert("추론을 시작할 수 없습니다. 서버 로그를 확인해주세요.");
+        }
     };
 
     const handleStopInference = () => {
@@ -274,13 +314,44 @@ function App() {
             reader.onload = (event) => {
                 try {
                     const text = event.target?.result as string;
-                    // Assuming JSON format for now. If TXT, additional parsing will be needed.
-                    const parsedData = JSON.parse(text);
-                    setAnnotationData(parsedData);
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    const parsedAnnotations: { [key: string]: any } = {};
+
+                    lines.forEach(line => {
+                        const parts = line.trim().split(/\s+/); // 공백으로 분리
+                        if (parts.length < 2) return; // 최소 파일명과 라벨
+
+                        const fileName = parts[0];
+                        // 기존 어노테이션 데이터가 있다면 불러오고, 없으면 초기화
+                        parsedAnnotations[fileName] = parsedAnnotations[fileName] || {};
+
+                        // AR 타입: 파일명 라벨 (예: video1.mp4 fight)
+                        if (parts.length === 2) {
+                            const label = parts[1];
+                            parsedAnnotations[fileName].AR = { label: label };
+                        }
+                        // AL 타입: 파일명 라벨 시작프레임 종료프레임 [시작프레임2 종료프레임2 ...] (예: video1.mp4 fight 100 200 nonfight 300 400)
+                        else if (parts.length >= 4 && (parts.length - 2) % 2 === 0) {
+                            const commonLabel = parts[1]; // 두 번째 열을 공통 라벨로 사용
+                            parsedAnnotations[fileName].AL = parsedAnnotations[fileName].AL || [];
+                            for (let i = 2; i < parts.length; i += 2) {
+                                const startFrame = parseInt(parts[i], 10);
+                                const endFrame = parseInt(parts[i + 1], 10);
+                                if (!isNaN(startFrame) && !isNaN(endFrame)) {
+                                    parsedAnnotations[fileName].AL.push({ label: commonLabel, start_frame: startFrame, end_frame: endFrame });
+                                } else {
+                                    console.warn(`AL 어노테이션 파싱 오류: 유효하지 않은 프레임 값 - ${line}`);
+                                }
+                            }
+                        } else {
+                            console.warn(`어노테이션 형식 오류: ${line}`);
+                        }
+                    });
+                    setAnnotationData(parsedAnnotations);
                     alert('어노테이션 파일이 성공적으로 로드되었습니다.');
-                } catch (error) {
+                } catch (error: any) { // 명시적으로 any 타입 선언
                     console.error("어노테이션 파일 파싱 오류:", error);
-                    alert('어노테이션 파일 파싱에 실패했습니다. 유효한 JSON 형식인지 확인해주세요.');
+                    alert('어노테이션 파일 파싱에 실패했습니다. 올바른 형식인지 확인해주세요.\n에러: ' + error.message);
                     setAnnotationData({});
                 }
             };
@@ -302,7 +373,7 @@ function App() {
         }
     };
     
-    const isAnalysisComplete = inferenceState.events.some(ev => ev.type === 'complete');
+    const isAnalysisComplete = inferenceState?.events?.some(ev => ev.type === 'complete') ?? false;
     
     const handleOpenAnalysisVideoSelect = async () => {
         setStreamMode('analysis');
@@ -499,11 +570,11 @@ function App() {
                             </Box>
                             <Box sx={{ mt: 0.5 }}>
                                 <ProgressDisplay
-                                    isInferencing={inferenceState.is_inferencing}
-                                    currentVideo={inferenceState.current_video}
-                                    currentProgress={inferenceState.current_progress}
-                                    totalVideos={inferenceState.total_videos}
-                                    processedVideos={inferenceState.processed_videos}
+                                    isInferencing={inferenceState?.is_inferencing ?? false}
+                                    currentVideo={inferenceState?.current_video ?? ''}
+                                    currentProgress={inferenceState?.current_progress ?? 0}
+                                    totalVideos={inferenceState?.total_videos ?? 0}
+                                    processedVideos={inferenceState?.processed_videos ?? 0}
                                 />
                             </Box>
                         </Paper>
@@ -565,7 +636,12 @@ function App() {
                             <Grid container spacing={2} sx={{ flexGrow: 1 }}>
                                 <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <Typography variant="subtitle2" gutterBottom>누적 정확도 그래프</Typography>
-                                    <VideoInferenceChart events={inferenceState.events} classLabels={classLabels} videoDuration={videoDuration} cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
+                                    <VideoInferenceChart 
+                                        events={inferenceState?.events ?? []} 
+                                        classLabels={classLabels} 
+                                        videoDuration={videoDuration} 
+                                        cumulativeAccuracyHistory={cumulativeAccuracyHistory} 
+                                    />
                                 </Grid>
                                 <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <Typography variant="subtitle2" gutterBottom>PR 커브 그래프 (개발 예정)</Typography>
@@ -583,7 +659,10 @@ function App() {
                         {/* 실시간 추론 이벤트 */}
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
                             <Typography variant="h6" gutterBottom>실시간 추론 이벤트</Typography>
-                            <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
+                            <InferenceResultTable 
+                                events={inferenceState?.events ?? []} 
+                                classLabels={classLabels} 
+                            />
                         </Paper>
                         {/* 실시간 추론 메트릭 (중앙에서 이동) */}
                         <Paper sx={{ p: 2, flexGrow: 0, display: 'flex', flexDirection: 'column', mt: 2 }}>
