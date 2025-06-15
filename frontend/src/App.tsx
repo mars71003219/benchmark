@@ -22,6 +22,7 @@ import './global.css';
 import { SelectChangeEvent } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import ConfusionMatrixDisplay from './components/ConfusionMatrixDisplay';
+import ConfusionMatrixGraph from './components/ConfusionMatrixGraph';
 
 const theme = createTheme({
     palette: {
@@ -642,6 +643,16 @@ function App() {
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>비디오 추론 이벤트 그래프</Typography>
                             <Grid container spacing={2} sx={{ flexGrow: 1 }}>
+                                <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography variant="subtitle2" gutterBottom>혼동 행렬 그래프</Typography>
+                                    <ConfusionMatrixGraph metrics={inferenceState.metrics} />
+                                </Grid>
+                                <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    {/* 두 번째 열 */}
+                                </Grid>
+                                <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    {/* 세 번째 열 */}
+                                </Grid>
                             </Grid>
                         </Paper>
                     </Grid>
