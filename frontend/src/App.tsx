@@ -15,7 +15,6 @@ import VideoResultViewer from './components/VideoResultViewer';
 import InferenceResultTable from './components/InferenceResultTable';
 import ModelSelector from './components/ModelSelector';
 import ModelLoadingAnimation from './components/ModelLoadingAnimation';
-import VideoInferenceChart from './components/VideoInferenceChart';
 import ProgressDisplay from './components/ProgressDisplay';
 import { useWebSocket } from './hooks/useWebSocket';
 import Hls from 'hls.js';
@@ -643,17 +642,6 @@ function App() {
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>비디오 추론 이벤트 그래프</Typography>
                             <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography variant="subtitle2" gutterBottom>누적 정확도 그래프</Typography>
-                                    <VideoInferenceChart events={inferenceState.events} classLabels={classLabels} videoDuration={videoDuration} cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
-                                </Grid>
-                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography variant="subtitle2" gutterBottom>PR 커브 그래프 (개발 예정)</Typography>
-                                    {/* Placeholder for PR Curve component */}
-                                    <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#eee', borderRadius: 1 }}>
-                                        <Typography variant="body2" color="text.secondary">PR 커브 그래프 영역</Typography>
-                                    </Box>
-                                </Grid>
                             </Grid>
                         </Paper>
                     </Grid>
