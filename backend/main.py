@@ -112,6 +112,8 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
         except asyncio.QueueFull: pass
         
         all_results = []
+        final_results = []  # 최종 결과를 저장할 리스트
+
         for i, video_path in enumerate(video_files):
             if stop_checker():
                 current_video_info["events"].append({"type": "stop", "timestamp": datetime.now().isoformat()})
@@ -125,6 +127,7 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
             # Get annotations for the current video
             current_video_name = video_path.name
             video_annotations_for_current_video = annotation_data.get(current_video_name, {})
+            video_results = []  # 현재 비디오의 모든 추론 결과를 저장
 
             def progress_callback(done, total):
                 current_video_info["current_progress"] = int(done / total * 100) if total > 0 else 0
@@ -132,80 +135,16 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                 except asyncio.QueueFull: pass
 
             def result_callback(result: Dict):
-                global global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
-
-                is_correct_segment_prediction = False
-
-                if inference_mode == "AR":
-                    if "AR" in video_annotations_for_current_video:
-                        gt_label = video_annotations_for_current_video["AR"].get("label")
-                        if gt_label:
-                            if result["prediction_label"] == gt_label:
-                                is_correct_segment_prediction = True
-
-                            if gt_label == "fight": # Assuming 'fight' is the positive class
-                                if result["prediction_label"] == "fight": global_tp += 1
-                                else: global_fn += 1
-                            elif gt_label == "nonfight":
-                                if result["prediction_label"] == "nonfight": global_tn += 1
-                                else: global_fp += 1
-                        
-                elif inference_mode == "AL":
-                    if "AL" in video_annotations_for_current_video:
-                        anno_segments = video_annotations_for_current_video["AL"]
-                        current_seg_start = result["start_frame"]
-                        current_seg_end = result["end_frame"]
-
-                        matched_anno_label = None
-                        
-                        for anno_seg in anno_segments:
-                            anno_label = anno_seg["label"]
-                            anno_start = anno_seg["start_frame"]
-                            anno_end = anno_seg["end_frame"]
-
-                            if max(current_seg_start, anno_start) < min(current_seg_end, anno_end): # Overlap
-                                matched_anno_label = anno_label
-                                break
-
-                        if matched_anno_label:
-                            if result["prediction_label"] == matched_anno_label:
-                                is_correct_segment_prediction = True
-                            
-                            if matched_anno_label == "fight":
-                                if result["prediction_label"] == "fight": global_tp += 1
-                                else: global_fn += 1
-                            elif matched_anno_label == "nonfight":
-                                if result["prediction_label"] == "nonfight": global_tn += 1
-                                else: global_fp += 1
-                        else: # No annotation for this inferred segment, assume default is 'nonfight'
-                            if result["prediction_label"] == "nonfight":
-                                global_tn += 1 # True Negative if prediction is 'nonfight' and no annotation matches
-                            else:
-                                global_fp += 1 # False Positive if prediction is 'fight' and no annotation matches
-
-                global_total_processed_clips += 1
-                if is_correct_segment_prediction:
-                    global_correct_predictions += 1
-                
-                # Update cumulative accuracy and metrics
-                if global_total_processed_clips > 0:
-                    current_video_info["cumulative_accuracy"] = global_correct_predictions / global_total_processed_clips
-                
-                precision = global_tp / (global_tp + global_fp) if (global_tp + global_fp) > 0 else 0.0
-                recall = global_tp / (global_tp + global_fn) if (global_tp + global_fn) > 0 else 0.0
-                f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-
-                current_video_info["metrics"] = {
-                    "tp": global_tp, "tn": global_tn, "fp": global_fp, "fn": global_fn,
-                    "precision": round(precision, 2), "recall": round(recall, 2), "f1_score": round(f1_score, 2)
-                }
-
+                # UI 업데이트를 위한 이벤트만 전송
                 current_video_info["events"].append({
                     "type": "detection", "video": video_path.name,
                     "timestamp": datetime.now().isoformat(), "data": result
                 })
                 try: inference_state_queue.put_nowait(current_video_info.copy())
                 except asyncio.QueueFull: pass
+                
+                # 현재 비디오의 결과 저장
+                video_results.append(result)
 
             def frame_callback(frame_data: bytes):
                 try:
@@ -214,21 +153,68 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                     pass # Drop frame if consumer is not ready
 
             try:
-                video_results = process_video(
+                process_video(
                     video_path=video_path, model=model, feature_extractor=feature_extractor,
                     sampling_window_frames=interval, sliding_window_step_frames=infer_period,
                     num_frames_to_sample=batch, progress_callback=progress_callback,
                     result_callback=result_callback, stop_checker=stop_checker,
                     frame_callback=frame_callback,
-                    # AR/AL logic moved to result_callback based on `inference_mode` and `annotation_data`
-                    # No need to pass these to process_video directly for now
-                    # inference_mode=inference_mode,
-                    # annotation_data=annotation_data
                 )
-                all_results.extend(video_results)
+
+                # 비디오 클립 단위 결과 계산
                 if video_results:
-                    overlay_path = save_dir / f"{video_path.stem}_overlay.mp4"
-                    create_overlay_video(video_path, video_results, overlay_path)
+                    # 모든 라벨이 Non으로 시작하는지 확인
+                    all_labels = [r["prediction_label"] for r in video_results]
+                    all_are_non = all(label.lower().startswith("non") for label in all_labels)
+                    
+                    final_label_for_video = None
+                    if all_are_non:
+                        # 모든 라벨이 Non으로 시작하면 첫 번째 Non 라벨을 선택
+                        final_label_for_video = all_labels[0]
+                    else:
+                        # Non이 아닌 라벨이 하나라도 있으면, 가장 많이 나오는 이벤트 라벨을 선택
+                        from collections import Counter
+                        event_labels = [label for label in all_labels if not label.lower().startswith("non")]
+                        if event_labels:
+                            final_label_for_video = Counter(event_labels).most_common(1)[0][0]
+                    
+                    if final_label_for_video:
+                        # 최종 결과 저장
+                        final_result = {
+                            "video_name": video_path.name,
+                            "final_label": final_label_for_video
+                        }
+                        final_results.append(final_result)
+                        
+                        # Ground truth와 비교하여 메트릭 업데이트
+                        if "AR" in video_annotations_for_current_video:
+                            gt_label = video_annotations_for_current_video["AR"].get("label")
+                            if gt_label:
+                                if gt_label == "Fight":  # Assuming 'Fight' is the positive class
+                                    if final_label_for_video == "Fight": global_tp += 1
+                                    else: global_fp += 1
+                                elif gt_label == "NonFight":
+                                    if final_label_for_video == "NonFight": global_tn += 1
+                                    else: global_fn += 1
+                                
+                                global_total_processed_clips += 1
+                                if final_label_for_video == gt_label:
+                                    global_correct_predictions += 1
+                                
+                                # Update cumulative accuracy and metrics
+                                if global_total_processed_clips > 0:
+                                    current_video_info["cumulative_accuracy"] = global_correct_predictions / global_total_processed_clips
+                                
+                                precision = global_tp / (global_tp + global_fp) if (global_tp + global_fp) > 0 else 0.0
+                                recall = global_tp / (global_tp + global_fn) if (global_tp + global_fn) > 0 else 0.0
+                                f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+
+                                current_video_info["metrics"] = {
+                                    "tp": global_tp, "tn": global_tn, "fp": global_fp, "fn": global_fn,
+                                    "precision": round(precision, 2), "recall": round(recall, 2), "f1_score": round(f1_score, 2)
+                                }
+                                try: inference_state_queue.put_nowait(current_video_info.copy())
+                                except asyncio.QueueFull: pass
                 
                 current_video_info["events"].append({"type": "video_processed", "video": video_path.name, "timestamp": datetime.now().isoformat()})
                 current_video_info["processed_videos"] = i + 1
@@ -241,8 +227,15 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                 try: inference_state_queue.put_nowait(current_video_info.copy())
                 except asyncio.QueueFull: pass
         
-        if all_results:
-            create_results_csv(all_results, save_dir / "results.csv")
+        # 최종 결과를 CSV 파일로 저장
+        if final_results:
+            import csv
+            csv_path = save_dir / "final_results.csv"
+            with open(csv_path, 'w', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=['video_name', 'final_label'])
+                writer.writeheader()
+                writer.writerows(final_results)
+        
         current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
     finally:
         current_video_info["is_inferencing"] = False # Ensure this is always set to False

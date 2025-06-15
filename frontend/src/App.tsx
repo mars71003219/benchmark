@@ -33,6 +33,23 @@ const theme = createTheme({
 
 interface UploadedFile { name: string; size: number; duration?: number; }
 
+interface AnnotationSegment {
+    start_frame: number;
+    end_frame: number;
+    label: string;
+}
+
+interface VideoAnnotation {
+    AR?: {
+        label: string;
+    };
+    AL?: AnnotationSegment[];
+}
+
+interface AnnotationData {
+    [videoName: string]: VideoAnnotation;
+}
+
 function App() {
     const [modelId, setModelId] = useState('');
     const [modelStatus, setModelStatus] = useState<'none' | 'loading' | 'loaded'>('none');
@@ -57,7 +74,7 @@ function App() {
     const [realtimeOverlayFrame, setRealtimeOverlayFrame] = useState<string | null>(null);
     const [isAnalysisVideoSelectOpen, setIsAnalysisVideoSelectOpen] = useState(false);
     const [inferenceMode, setInferenceMode] = useState<'default' | 'AR' | 'AL'>('default');
-    const [annotationData, setAnnotationData] = useState<any>({});
+    const [annotationData, setAnnotationData] = useState<AnnotationData>({});
     const [cumulativeAccuracyHistory, setCumulativeAccuracyHistory] = useState<{ processed_clips: number; accuracy: number; }[]>([]);
     const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
 
@@ -258,8 +275,15 @@ function App() {
 
     const handleStartInference = () => {
         fetch('http://localhost:10000/infer', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ interval: frameInterval, infer_period: inferPeriod, batch: batchFrames }),
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                interval: frameInterval, 
+                infer_period: inferPeriod, 
+                batch: batchFrames,
+                inference_mode: inferenceMode,
+                annotation_data: annotationData  // annotation 데이터 추가
+            }),
         });
     };
 
@@ -274,13 +298,69 @@ function App() {
             reader.onload = (event) => {
                 try {
                     const text = event.target?.result as string;
-                    // Assuming JSON format for now. If TXT, additional parsing will be needed.
-                    const parsedData = JSON.parse(text);
+                    let parsedData: AnnotationData = {};
+                    
+                    if (file.name.endsWith('.txt')) {
+                        // TXT 파일 파싱
+                        const lines = text.split('\n').filter(line => line.trim());
+                        
+                        lines.forEach(line => {
+                            const parts = line.split(' ');
+                            const videoName = parts[0];
+                            const label = parts[1];
+                            
+                            if (!parsedData[videoName]) {
+                                parsedData[videoName] = {};
+                            }
+                            
+                            // AR 모드
+                            if (inferenceMode === 'AR') {
+                                if (parts.length !== 2) {
+                                    throw new Error(`AR 모드에서는 비디오 이름과 레이블만 필요합니다: ${line}`);
+                                }
+                                parsedData[videoName]['AR'] = {
+                                    label: label.trim()
+                                };
+                            }
+                            // AL 모드
+                            else if (inferenceMode === 'AL') {
+                                if (!parsedData[videoName]['AL']) {
+                                    parsedData[videoName]['AL'] = [];
+                                }
+                                
+                                // Nonfight 레이블인 경우 프레임 번호가 없음
+                                if (label.toLowerCase().includes('non')) {
+                                    if (parts.length !== 2) {
+                                        throw new Error(`NonFight 레이블에는 프레임 번호가 필요하지 않습니다: ${line}`);
+                                    }
+                                    parsedData[videoName]['AL'] = [];
+                                } else {
+                                    // 시작/종료 프레임 쌍을 처리
+                                    if (parts.length < 4) {
+                                        throw new Error(`Fight 레이블에는 최소 하나의 시작/종료 프레임 쌍이 필요합니다: ${line}`);
+                                    }
+                                    for (let i = 2; i < parts.length; i += 2) {
+                                        if (i + 1 < parts.length) {
+                                            parsedData[videoName]['AL']?.push({
+                                                start_frame: parseInt(parts[i]),
+                                                end_frame: parseInt(parts[i + 1]),
+                                                label: label.trim()
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        // JSON 파일 파싱
+                        parsedData = JSON.parse(text);
+                    }
+                    
                     setAnnotationData(parsedData);
                     alert('어노테이션 파일이 성공적으로 로드되었습니다.');
-                } catch (error) {
+                } catch (error: any) {
                     console.error("어노테이션 파일 파싱 오류:", error);
-                    alert('어노테이션 파일 파싱에 실패했습니다. 유효한 JSON 형식인지 확인해주세요.');
+                    alert(`어노테이션 파일 파싱에 실패했습니다: ${error.message}`);
                     setAnnotationData({});
                 }
             };
