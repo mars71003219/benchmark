@@ -25,8 +25,8 @@ const ConfusionMatrixGraph: React.FC<ConfusionMatrixGraphProps> = ({ metrics }) 
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gridTemplateRows: '1fr 1fr',
-        width: '200px', // Fixed width for the matrix
-        height: '200px', // Fixed height for the matrix
+        width: '160px', // 크기 줄임
+        height: '160px', // 크기 줄임
         border: '1px solid #ccc',
         borderRadius: '4px',
         overflow: 'hidden',
@@ -39,70 +39,141 @@ const ConfusionMatrixGraph: React.FC<ConfusionMatrixGraphProps> = ({ metrics }) 
         alignItems: 'center',
         border: '1px solid #eee',
         fontWeight: 'bold',
-        fontSize: '1.2em',
+        fontSize: '1.2em', // 폰트 크기 줄임
+        padding: '2px', // 패딩 줄임
     };
 
     const labelStyle: React.CSSProperties = {
-        fontSize: '0.8em',
+        fontSize: '0.6em', // 폰트 크기 줄임
         fontWeight: 'normal',
         color: '#555',
-        marginTop: '4px',
+        marginTop: '1px',
+        textAlign: 'center',
+        lineHeight: '1',
     };
 
-    // Define colors based on the provided image (darker blue for correct, lighter blue for incorrect)
-    const correctColor = '#1f77b4'; // Dark blue (similar to TN/TP in image)
-    const incorrectColor = '#a6cee3'; // Lighter blue (similar to FP/FN in image)
+    // Define colors based on the provided image
+    const correctColor = '#1f77b4'; // Dark blue for correct predictions
+    const incorrectColor = '#a6cee3'; // Light blue for incorrect predictions
+
+    // 좌측 라벨 영역 너비 계산
+    const leftLabelWidth = 70; // Actual Label + Row Headers 총 너비
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>Confusion Matrix</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', p: 1.5 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ mb: 1.5, fontSize: '0.9em' }}>Confusion Matrix</Typography>
 
-            {/* Container for everything below the main title */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 'fit-content' }}>
+            {/* Main container for the matrix and labels */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: 'fit-content' }}>
 
-                {/* Predicted Label (axis header) and column headers */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="caption">Predicted Label</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-around', width: matrixStyle.width, mt: 0.5 }}>
-                        <Typography variant="caption" sx={{ flex: 1, textAlign: 'center' }}>NonFight</Typography>
-                        <Typography variant="caption" sx={{ flex: 1, textAlign: 'center' }}>Fight</Typography>
+                {/* Predicted Label and Column Headers */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        {/* 좌측 여백 */}
+                        <Box sx={{ width: `${leftLabelWidth}px` }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.7em' }}>Predicted Label</Typography>
+                        </Box>
+                        {/* 컬럼 헤더들 */}
+                        <Box sx={{ display: 'flex', width: matrixStyle.width }}>
+                            <Box sx={{ width: '50%', textAlign: 'center' }}>
+                                <Typography variant="caption" sx={{ fontWeight: 'medium', fontSize: '0.7em' }}>NonFight</Typography>
+                            </Box>
+                            <Box sx={{ width: '50%', textAlign: 'center' }}>
+                                <Typography variant="caption" sx={{ fontWeight: 'medium', fontSize: '0.7em' }}>Fight</Typography>
+                            </Box>
+                        </Box>
                     </Box>
                 </Box>
 
-                {/* Actual Label (axis header) and Matrix with row headers */}
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-                    {/* Actual Label (axis header) - centered vertically */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: matrixStyle.height, mr: 0.5 }}>
-                        <Typography variant="caption" sx={{ transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>Actual Label</Typography>
+                {/* Actual Label and Matrix with Row Headers */}
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                    {/* Actual Label Axis Header */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        height: matrixStyle.height, 
+                        mr: 0.5,
+                        width: '35px',
+                        justifyContent: 'center'
+                    }}>
+                        <Typography 
+                            variant="caption" 
+                            sx={{ 
+                                transform: 'rotate(-90deg)', 
+                                whiteSpace: 'nowrap',
+                                transformOrigin: 'center center',
+                                fontSize: '0.7em'
+                            }}
+                        >
+                            Actual Label
+                        </Typography>
                     </Box>
 
-                    {/* Row headers (NonFight, Fight) */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', mr: 1, height: matrixStyle.height, justifyContent: 'space-around', alignItems: 'center' }}>
-                        <Typography variant="caption" sx={{ transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>NonFight</Typography>
-                        <Typography variant="caption" sx={{ transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>Fight</Typography>
+                    {/* Row Headers (NonFight, Fight) */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        mr: 0.5,
+                        height: matrixStyle.height, 
+                        justifyContent: 'space-around', 
+                        alignItems: 'center',
+                        width: '35px'
+                    }}>
+                        <Typography 
+                            variant="caption" 
+                            sx={{ 
+                                transform: 'rotate(-90deg)', 
+                                whiteSpace: 'nowrap',
+                                fontWeight: 'medium',
+                                transformOrigin: 'center center',
+                                fontSize: '0.7em'
+                            }}
+                        >
+                            NonFight
+                        </Typography>
+                        <Typography 
+                            variant="caption" 
+                            sx={{ 
+                                transform: 'rotate(-90deg)', 
+                                whiteSpace: 'nowrap',
+                                fontWeight: 'medium',
+                                transformOrigin: 'center center',
+                                fontSize: '0.7em'
+                            }}
+                        >
+                            Fight
+                        </Typography>
                     </Box>
 
                     {/* Confusion Matrix Grid */}
                     <div style={matrixStyle}>
-                        {/* TN */}
+                        {/* TN - Top Left */} 
                         <div style={{ ...cellStyle, backgroundColor: correctColor }}>
-                            {tn}
-                            <span style={labelStyle}>TN (NonFight)</span>
+                            <Typography variant="inherit" sx={{ color: '#fff', fontSize: '1.2em', fontWeight: 'bold' }}>
+                                {tn}
+                            </Typography>
+                            <span style={{ ...labelStyle, color: '#fff' }}>TN<br/>(NonFight)</span>
                         </div>
-                        {/* FP */}
+                        {/* FP - Top Right */} 
                         <div style={{ ...cellStyle, backgroundColor: incorrectColor }}>
-                            {fp}
-                            <span style={labelStyle}>FP (NonFight)</span>
+                            <Typography variant="inherit" sx={{ color: '#000', fontSize: '1.2em', fontWeight: 'bold' }}>
+                                {fp}
+                            </Typography>
+                            <span style={{ ...labelStyle, color: '#000' }}>FP<br/>(NonFight)</span>
                         </div>
-                        {/* FN */}
+                        {/* FN - Bottom Left */} 
                         <div style={{ ...cellStyle, backgroundColor: incorrectColor }}>
-                            {fn}
-                            <span style={labelStyle}>FN (Fight)</span>
+                            <Typography variant="inherit" sx={{ color: '#000', fontSize: '1.2em', fontWeight: 'bold' }}>
+                                {fn}
+                            </Typography>
+                            <span style={{ ...labelStyle, color: '#000' }}>FN<br/>(Fight)</span>
                         </div>
-                        {/* TP */}
+                        {/* TP - Bottom Right */} 
                         <div style={{ ...cellStyle, backgroundColor: correctColor }}>
-                            {tp}
-                            <span style={labelStyle}>TP (Fight)</span>
+                            <Typography variant="inherit" sx={{ color: '#fff', fontSize: '1.2em', fontWeight: 'bold' }}>
+                                {tp}
+                            </Typography>
+                            <span style={{ ...labelStyle, color: '#fff' }}>TP<br/>(Fight)</span>
                         </div>
                     </div>
                 </Box>
@@ -111,4 +182,4 @@ const ConfusionMatrixGraph: React.FC<ConfusionMatrixGraphProps> = ({ metrics }) 
     );
 };
 
-export default ConfusionMatrixGraph; 
+export default ConfusionMatrixGraph;

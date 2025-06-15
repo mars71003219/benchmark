@@ -23,6 +23,7 @@ import { SelectChangeEvent } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import ConfusionMatrixDisplay from './components/ConfusionMatrixDisplay';
 import ConfusionMatrixGraph from './components/ConfusionMatrixGraph';
+import CumulativeAccuracyGraph from './components/CumulativeAccuracyGraph';
 
 const theme = createTheme({
     palette: {
@@ -648,7 +649,8 @@ function App() {
                                     <ConfusionMatrixGraph metrics={inferenceState.metrics} />
                                 </Grid>
                                 <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    {/* 두 번째 열 */}
+                                    <Typography variant="subtitle2" gutterBottom>누적 정확도 그래프</Typography>
+                                    <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
                                 </Grid>
                                 <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     {/* 세 번째 열 */}
