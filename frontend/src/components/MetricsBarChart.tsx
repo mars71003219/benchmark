@@ -26,9 +26,9 @@ const MetricsBarChart: React.FC<MetricsBarChartProps> = ({ metrics }) => {
         { label: 'F1 Score', value: metrics.f1_score ?? 0, color: '#d62728' },   // Red
     ];
 
-    const svgWidth = 500;
+    const svgWidth = 450;
     const svgHeight = 200;
-    const padding = 30;
+    const padding = 40;
     const barWidth = (svgWidth - 2 * padding) / data.length - 10; // Reduced bar width for spacing
 
     const yScale = (value: number) => svgHeight - padding - (value / 1.0) * (svgHeight - 2 * padding);
@@ -37,8 +37,8 @@ const MetricsBarChart: React.FC<MetricsBarChartProps> = ({ metrics }) => {
     const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', p: 1, flexGrow: 1 }}>
-            <Typography variant="subtitle2" gutterBottom>Overall Model Performance Metrics</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 1, flexGrow: 1 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ mb: 4, fontSize: '1.2em', width: '90%', textAlign: 'center' }}>Overall Model Performance Metrics</Typography>
             <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ border: '1px solid #ccc', background: '#f8f8f8' }}>
                 {/* Grid Lines (Y-axis only) */}
                 {yTicks.map((tick, i) => (

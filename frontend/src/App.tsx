@@ -17,7 +17,6 @@ import ModelSelector from './components/ModelSelector';
 import ModelLoadingAnimation from './components/ModelLoadingAnimation';
 import ProgressDisplay from './components/ProgressDisplay';
 import { useWebSocket } from './hooks/useWebSocket';
-import Hls from 'hls.js';
 import './global.css';
 import { SelectChangeEvent } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
@@ -25,6 +24,7 @@ import ConfusionMatrixDisplay from './components/ConfusionMatrixDisplay';
 import ConfusionMatrixGraph from './components/ConfusionMatrixGraph';
 import CumulativeAccuracyGraph from './components/CumulativeAccuracyGraph';
 import MetricsBarChart from './components/MetricsBarChart';
+import VideoPlayer from './components/VideoPlayer';
 
 const theme = createTheme({
     palette: {
@@ -64,10 +64,8 @@ function App() {
     const [classLabels, setClassLabels] = useState<string[]>([]);
     const [videoDuration, setVideoDuration] = useState(0);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [streamMode, setStreamMode] = useState<'realtime' | 'analysis'>('realtime' as const);
     const [resultVideos, setResultVideos] = useState<string[]>([]);
     const [selectedVideo, setSelectedVideo] = useState<string>('');
-    const [isPlayerVisible, setPlayerVisible] = useState(true);
     const [totalFilesToUpload, setTotalFilesToUpload] = useState(0);
     const [uploadedFileCount, setUploadedFileCount] = useState(0);
     const [selectedUploadedFileName, setSelectedUploadedFileName] = useState<string>('');
@@ -108,72 +106,37 @@ function App() {
     }, [uploadedFiles, selectedUploadedFileName]);
 
     useEffect(() => {
-        if (videoRef.current && Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource('http://localhost:8554/overlay.m3u8');
-            hls.attachMedia(videoRef.current);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                if (videoRef.current) {
-                    videoRef.current.play();
-                }
-            });
-        }
-    }, []);
-
-    useEffect(() => {
-        if (streamMode === 'analysis') {
-            setPlayerVisible(false);
-            fetch('http://localhost:10000/results/videos')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.videos && data.videos.length > 0) {
-                        setResultVideos(data.videos);
-                        setSelectedVideo(data.videos[0]);
-                        setPlayerVisible(true);
-                    }
-                }).catch(err => console.error("결과 비디오 로딩 실패:", err));
-        } else {
-            setPlayerVisible(true);
-        }
-    }, [streamMode]);
-
-    useEffect(() => {
         let ws: WebSocket | null = null;
-        if (streamMode === 'realtime') {
-            ws = new WebSocket('ws://localhost:10000/ws/realtime_overlay');
-            ws.onopen = () => {
-                console.log('실시간 오버레이 WebSocket 연결됨');
-            };
-            ws.onmessage = (event) => {
-                setRealtimeOverlayFrame(`data:image/jpeg;base64,${event.data}`);
-            };
-            ws.onerror = (error) => {
-                console.error('실시간 오버레이 WebSocket 오류:', error);
-            };
-            ws.onclose = () => {
-                console.log('실시간 오버레이 WebSocket 연결 해제됨');
-                setRealtimeOverlayFrame(null);
-            };
-        }
+        ws = new WebSocket('ws://localhost:10000/ws/realtime_overlay');
+        ws.onopen = () => {
+            console.log('실시간 오버레이 WebSocket 연결됨');
+        };
+        ws.onmessage = (event) => {
+            setRealtimeOverlayFrame(`data:image/jpeg;base64,${event.data}`);
+        };
+        ws.onerror = (error) => {
+            console.error('실시간 오버레이 WebSocket 오류:', error);
+        };
+        ws.onclose = () => {
+            console.log('실시간 오버레이 WebSocket 연결 해제됨');
+            setRealtimeOverlayFrame(null);
+        };
         return () => {
             if (ws) {
                 ws.close();
             }
         };
-    }, [streamMode]);
+    }, []);
 
-    // 백엔드의 추론 상태와 isInferring 동기화
     useEffect(() => {
         if (inferenceState) {
             setIsInferring(inferenceState!.is_inferencing);
-            // Update cumulative accuracy history
             if (inferenceState.cumulative_accuracy !== undefined && inferenceState.processed_videos !== undefined) {
                 setCumulativeAccuracyHistory(prev => [
                     ...prev, 
                     { processed_clips: inferenceState.processed_videos, accuracy: inferenceState.cumulative_accuracy }
                 ]);
             }
-            // Update metrics history (though we usually just need the latest for confusion matrix display)
             if (inferenceState.metrics !== undefined) {
                 setMetricsHistory(prev => [...prev, inferenceState.metrics]);
             }
@@ -211,7 +174,6 @@ function App() {
             if (!res.ok) throw new Error('모델 로딩 실패');
             const data = await res.json();
             setModelId(id); setModelStatus('loaded');
-            // 백엔드에서 클래스 라벨을 직접 가져오도록 설정
             if (data.class_labels) {
                 setClassLabels(data.class_labels);
             }
@@ -227,7 +189,7 @@ function App() {
 
         setTotalFilesToUpload(files.length);
         setUploadedFileCount(0);
-        setCurrentUploadSessionFiles([]); // Reset for new upload session
+        setCurrentUploadSessionFiles([]);
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -245,7 +207,7 @@ function App() {
                     return newFiles.filter((v, idx, a) => a.findIndex(t => (t.name === v.name)) === idx);
                 });
                 setUploadedFileCount(prev => prev + 1);
-                setCurrentUploadSessionFiles(prev => [...prev, data.files[0].name]); // Add to current session files
+                setCurrentUploadSessionFiles(prev => [...prev, data.files[0].name]);
             } catch (error) {
                 console.error(error);
                 alert(error); 
@@ -259,7 +221,6 @@ function App() {
     const handleRemoveFile = async (fileName: string) => {
         await fetch(`http://localhost:10000/upload/${encodeURIComponent(fileName)}`, { method: 'DELETE' });
         setUploadedFiles(prev => prev.filter(f => f.name !== fileName));
-        // If the deleted file was the selected one, clear selection
         if (selectedUploadedFileName === fileName) {
             setSelectedUploadedFileName('');
         }
@@ -268,7 +229,7 @@ function App() {
     const handleRemoveAllFiles = async () => {
         await fetch('http://localhost:10000/uploads', { method: 'DELETE' });
         setUploadedFiles([]);
-        setSelectedUploadedFileName(''); // Clear selection after all files removed
+        setSelectedUploadedFileName('');
     };
 
     const handleFileSelectChange = (event: SelectChangeEvent<string>) => {
@@ -284,7 +245,7 @@ function App() {
                 infer_period: inferPeriod, 
                 batch: batchFrames,
                 inference_mode: inferenceMode,
-                annotation_data: annotationData  // annotation 데이터 추가
+                annotation_data: annotationData
             }),
         });
     };
@@ -303,7 +264,6 @@ function App() {
                     let parsedData: AnnotationData = {};
                     
                     if (file.name.endsWith('.txt')) {
-                        // TXT 파일 파싱
                         const lines = text.split('\n').filter(line => line.trim());
                         
                         lines.forEach(line => {
@@ -315,7 +275,6 @@ function App() {
                                 parsedData[videoName] = {};
                             }
                             
-                            // AR 모드
                             if (inferenceMode === 'AR') {
                                 if (parts.length !== 2) {
                                     throw new Error(`AR 모드에서는 비디오 이름과 레이블만 필요합니다: ${line}`);
@@ -324,20 +283,17 @@ function App() {
                                     label: label.trim()
                                 };
                             }
-                            // AL 모드
                             else if (inferenceMode === 'AL') {
                                 if (!parsedData[videoName]['AL']) {
                                     parsedData[videoName]['AL'] = [];
                                 }
                                 
-                                // Nonfight 레이블인 경우 프레임 번호가 없음
                                 if (label.toLowerCase().includes('non')) {
                                     if (parts.length !== 2) {
                                         throw new Error(`NonFight 레이블에는 프레임 번호가 필요하지 않습니다: ${line}`);
                                     }
                                     parsedData[videoName]['AL'] = [];
                                 } else {
-                                    // 시작/종료 프레임 쌍을 처리
                                     if (parts.length < 4) {
                                         throw new Error(`Fight 레이블에는 최소 하나의 시작/종료 프레임 쌍이 필요합니다: ${line}`);
                                     }
@@ -354,7 +310,6 @@ function App() {
                             }
                         });
                     } else {
-                        // JSON 파일 파싱
                         parsedData = JSON.parse(text);
                     }
                     
@@ -387,9 +342,6 @@ function App() {
     const isAnalysisComplete = inferenceState.events.some(ev => ev.type === 'complete');
     
     const handleOpenAnalysisVideoSelect = async () => {
-        setStreamMode('analysis');
-        setPlayerVisible(false);
-
         try {
             const res = await fetch('http://localhost:10000/results/videos');
             if (!res.ok) throw new Error('결과 비디오 로딩 실패');
@@ -399,27 +351,19 @@ function App() {
                 setIsAnalysisVideoSelectOpen(true);
             } else {
                 alert('분석된 비디오가 없습니다.');
-                setStreamMode('realtime');
-                setPlayerVisible(true);
             }
         } catch (err) {
             console.error("결과 비디오 로딩 실패:", err);
             alert("분석 비디오 로딩에 실패했습니다. 백엔드 서버 로그를 확인해 주세요.");
-            setStreamMode('realtime');
-            setPlayerVisible(true);
         }
     };
 
     const handleCloseAnalysisVideoSelect = () => {
         setIsAnalysisVideoSelectOpen(false);
-        if (!selectedVideo && streamMode === 'analysis') {
-            setStreamMode('realtime');
-        }
     };
 
     const handleSelectAnalysisVideo = (videoUrl: string) => {
         setSelectedVideo(videoUrl);
-        setPlayerVisible(true);
         setIsAnalysisVideoSelectOpen(false);
     };
 
@@ -429,17 +373,13 @@ function App() {
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Container maxWidth={false} sx={{ p: '16px !important', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0, height: '100%' }}>
-                    {/* 좌측: 모델/업로드/설정/시스템 */}
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, minHeight: 0, minWidth: 350, maxWidth: 350 }}>
-                        {/* 모델 로드 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 0, flexShrink: 0, height: 100, width: 350 }}>
+                <Grid container spacing={1} sx={{ flexGrow: 1, minHeight: 0, height: '100%' }}>
+                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, minHeight: 0}}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 0, flexShrink: 0, height: 120 }}>
                             {renderModelLoader()}
-
                         </Paper>
-                        {/* 비디오 업로드 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 150, width: 350 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 200 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                 <Typography variant="subtitle1">Video Upload</Typography>
                                 <Box>
                                 </Box>
@@ -465,8 +405,8 @@ function App() {
                                     MenuProps={{
                                         PaperProps: {
                                             sx: {
-                                                maxHeight: 200, // Max height for scroll
-                                                overflowY: 'auto', // Enable scroll
+                                                maxHeight: 200,
+                                                overflowY: 'auto',
                                             },
                                         },
                                     }}
@@ -500,20 +440,18 @@ function App() {
                                     ))}
                                 </Select>
                             </FormControl>
-
                         </Paper>
-                        {/* 추론 설정 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto', width: 350 }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2 }}>Inference Setting</Typography>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height:320}}>
+                            <Typography variant="subtitle1" sx={{ mb: 3 }}>Inference Setting</Typography>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
                                     <TextField
-                                        label="샘플링 구간(Frames)"
+                                        label="배치 구간(Frames)"
                                         type="number"
                                         value={frameInterval}
                                         onChange={(e) => setFrameInterval(Number(e.target.value))}
                                         size="small"
-                                        fullWidth
+                                        fullWidth sx={{ fontSize: '0.7rem' }}
                                     />
                                 </Grid>
                                 <Grid item xs={4}>
@@ -523,17 +461,17 @@ function App() {
                                         value={inferPeriod}
                                         onChange={(e) => setInferPeriod(Number(e.target.value))}
                                         size="small"
-                                        fullWidth
+                                        fullWidth sx={{ fontSize: '0.7rem' }}
                                     />
                                 </Grid>
                                 <Grid item xs={4}>
                                     <TextField
-                                        label="샘플링 프레임(Batch)"
+                                        label="추출 프레임(Batch)"
                                         type="number"
                                         value={batchFrames}
                                         onChange={(e) => setBatchFrames(Number(e.target.value))}
                                         size="small"
-                                        fullWidth
+                                        fullWidth sx={{ fontSize: '0.7rem' }}
                                     />
                                 </Grid>
                             </Grid>
@@ -559,7 +497,7 @@ function App() {
                                     </Button>
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <Button variant="outlined" component="label" size="small" fullWidth>
+                                    <Button variant="outlined" component="label" size="small" fullWidth sx={{ fontSize: '0.8rem' }}>
                                        Annotation 
                                         <input type="file" hidden accept=".json,.txt" onChange={handleAnnotationUpload} />
                                     </Button>
@@ -589,63 +527,60 @@ function App() {
                                 />
                             </Box>
                         </Paper>
-                        {/* 시스템 정보 */}
-                        <SystemInfo sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto', width: 350 }} />
+                        <SystemInfo sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto'}} />
                     </Grid>
-                    {/* 중앙: 실시간/분석 스트림 및 그래프 */}
-                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
-                        {/* 실시간/분석 토글 및 비디오 재생 - 높이 고정 */}
-                        <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', p: 0 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, pt: 2, pb: 2 }}>
-                                <Typography variant="subtitle1" color="white">{streamMode === 'realtime' ? '실시간 스트림' : '분석 결과'}</Typography>
-                                <Box>
-                                    <Button variant={streamMode === 'realtime' ? 'contained' : 'outlined'} size="small" sx={{ mr: 1 }} onClick={() => setStreamMode('realtime')}>실시간</Button>
-                                    <Button variant={streamMode === 'analysis' ? 'contained' : 'outlined'} size="small" onClick={handleOpenAnalysisVideoSelect}>분석</Button>
-                                </Box>
-                            </Box>
-                            <Box sx={{ width: '640px', height: '360px', mx: 'auto', mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                {isPlayerVisible ? (
-                                    streamMode === 'realtime' ? (
-                                        realtimeOverlayFrame ? (
+                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', pt: 4 }}>
+                        <Grid container sx={{ flexGrow: 0, flexShrink: 0, height: '400px' }}>
+                            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginRight: '8px' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2 }}>
+                                        <Typography variant="subtitle1" color="white">실시간 추론 영상 스트림</Typography>
+                                    </Box>
+                                    <Box sx={{ width: '100%', height: 'calc(100% - 48px)', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2 }}>
+                                        {realtimeOverlayFrame ? (
                                             <img src={realtimeOverlayFrame} alt="Realtime Overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                         ) : (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
-                                                <CircularProgress /> <Typography sx={{ ml: 2 }}>실시간 스트림 로딩 중...</Typography>
+                                                <Typography sx={{ ml: 2 }}>실시간 추론 스트림 로딩...</Typography>
                                             </Box>
-                                        )
-                                    ) : (
-                                        selectedVideo ? (
-                                            <video 
-                                                src={selectedVideoUrl} 
-                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                                                controls 
-                                                onError={(e) => {
-                                                    console.error('비디오 로딩 에러:', e);
-                                                    alert('비디오 로딩에 실패했습니다. 서버 로그를 확인해주세요.');
-                                                }}
-                                            />
-                                        ) : (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
-                                                <Typography>분석 비디오를 선택하세요</Typography>
-                                            </Box>
-                                        )
-                                    )
-                                ) : (
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
-                                        <CircularProgress /> <Typography sx={{ ml: 2 }}>비디오 로딩 중...</Typography>
+                                        )}
                                     </Box>
-                                )}
-                            </Box>
-                        </Paper>
-                        {/* 비디오 추론 이벤트 그래프 - 2개 열로 나눔 */}
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginLeft: '8px' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2 }}>
+                                        <Typography variant="subtitle1" color="white">추론 결과 분석</Typography>
+                                    </Box>
+                                    <Box sx={{ width: '100%', height: 'calc(100% - 48px)', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2 }}>
+                                        {selectedVideo ? (
+                                            <VideoPlayer videoUrl={selectedVideoUrl} />
+                                        ) : (
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
+                                                <Typography>분석 비디오를 선택하세요</Typography>
+                                                <Button variant="contained" size="small" onClick={handleOpenAnalysisVideoSelect} sx={{ mt: 2 }}>추론 결과 영상 열기</Button>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                             <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                                <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                {/* --- 1번째 행 --- */}
+                                {/* 1. 혼동 행렬 그래프 (왼쪽 절반) */}
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <ConfusionMatrixGraph metrics={inferenceState.metrics} />
                                 </Grid>
-                                <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+
+                                {/* 2. 성능 지표 막대 차트 (오른쪽 절반) */}
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <MetricsBarChart metrics={metricsHistory[metricsHistory.length - 1]} />
                                 </Grid>
+
+                                {/* --- 2번째 행 --- */}
+                                {/* 3. 누적 정확도 그래프 (전체 너비) */}
                                 <Grid item xs={12} md={12} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
                                 </Grid>
@@ -653,21 +588,17 @@ function App() {
                         </Paper>
                     </Grid>
 
-                    {/* 우측: 실시간 추론 이벤트 및 실시간 추론 메트릭 */}
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', minHeight: 0 }}>
-                        {/* 실시간 추론 이벤트 */}
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
                             <Typography variant="h6" gutterBottom>실시간 추론 이벤트</Typography>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
                         </Paper>
-                        {/* 실시간 추론 메트릭 (중앙에서 이동) */}
                         <Paper sx={{ p: 2, flexGrow: 0, display: 'flex', flexDirection: 'column', mt: 2 }}>
                             <Typography variant="h6" gutterBottom>실시간 추론 메트릭</Typography>
                             <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
                         </Paper>
                     </Grid>
                 </Grid>
-                {/* Analysis Video Selection Dialog */}
                 <Dialog open={isAnalysisVideoSelectOpen} onClose={handleCloseAnalysisVideoSelect} maxWidth="sm" fullWidth>
                     <DialogTitle>분석 비디오 선택</DialogTitle>
                     <DialogContent>
@@ -676,7 +607,7 @@ function App() {
                         ) : (
                             <List>
                                 {resultVideos.map((video, index) => (
-                                    <ListItem button key={index} onClick={() => setSelectedVideo(video)} selected={selectedVideo === video}>
+                                    <ListItem button key={index} onClick={() => handleSelectAnalysisVideo(video)} selected={selectedVideo === video}>
                                         <ListItemText primary={video.substring(video.lastIndexOf('/') + 1)} />
                                     </ListItem>
                                 ))}

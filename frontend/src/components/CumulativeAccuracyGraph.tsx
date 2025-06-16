@@ -21,7 +21,7 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
     const maxProcessedClips = Math.max(...cumulativeAccuracyHistory.map(d => d.processed_clips), 0);
     const maxAccuracy = 1.0; // Accuracy is always between 0 and 1
 
-    const svgWidth = 300;
+    const svgWidth = 800;
     const svgHeight = 200;
     const padding = 30; // Padding for axes labels
 
@@ -37,8 +37,8 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
     const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 1, flexGrow: 1 }}>
-            <Typography variant="subtitle2" gutterBottom>Cumulative Accuracy over Test Progress</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 1, flexGrow: 1 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ mb: 1, fontSize: '1.2em', width: '90%', textAlign: 'center' }}>Cumulative Accuracy over Test Progress</Typography>
             <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ border: '1px solid #ccc', background: '#f8f8f8' }}>
                 {/* Grid Lines (simplified) */}
                 {xTicks.map((tick, i) => (
