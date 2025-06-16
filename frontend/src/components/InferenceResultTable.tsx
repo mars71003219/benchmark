@@ -20,11 +20,11 @@ const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, cla
   const detectionEvents = events.filter(e => e.type === 'detection' && e.data);
 
   return (
-    <Paper sx={{ width: '100%', flexGrow: 1, p: 2, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <Paper sx={{ width: '100%', p: 2, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
       <Typography variant="h6" gutterBottom sx={{ flexShrink: 0 }}>
         Inference Results
       </Typography>
-      <TableContainer sx={{ flexGrow: 1, overflow: 'auto', maxHeight: '100%' }}>
+      <TableContainer sx={{ height: 'calc(100% - 62px)', overflow: 'auto' }}>
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>

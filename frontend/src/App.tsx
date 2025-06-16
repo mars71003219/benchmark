@@ -375,10 +375,10 @@ function App() {
             <Container maxWidth={false} sx={{ p: '16px !important', height: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Grid container spacing={1} sx={{ flexGrow: 1, minHeight: 0 }}>
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, mb: 1 }}>
                             {renderModelLoader()}
                         </Paper>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1, flexShrink: 0, overflowY: 'auto' }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1, flexShrink: 0, overflowY: 'auto', mb: 1 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Video Upload</Typography>
                                 <Box>
@@ -441,7 +441,7 @@ function App() {
                                 </Select>
                             </FormControl>
                         </Paper>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto'}}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto', mb: 1}}>
                             <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: 'bold'}}>Inference Setting</Typography>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
@@ -531,7 +531,7 @@ function App() {
                     </Grid>
                     <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
                         {/* 상단 스트림 영역 - flex: 3으로 설정하여 30% 높이 */}
-                        <Box sx={{ flex: 3, display: 'flex', minHeight: 0, mb: 1 }}>
+                        <Box sx={{ flex: 3, display: 'flex', minHeight: 0, mb: 2 }}>
                             <Grid container sx={{ flexGrow: 1 }}>
                                 <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginRight: '8px', minHeight: 0 }}>
@@ -588,11 +588,13 @@ function App() {
                         </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
-                        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
+                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, height: '100%' }}>
+                        {/* Inference Results Table - 70% height */}
+                        <Box sx={{ height: '60%', display: 'flex', flexDirection: 'column', mb: 2, minHeight: 0 }}>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
                         </Box>
-                        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        {/* Confusion Matrix Graph - 30% height */}
+                        <Box sx={{ height: '40%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
                             <ConfusionMatrixGraph metrics={inferenceState.metrics} />
                         </Box>
                     </Grid>
