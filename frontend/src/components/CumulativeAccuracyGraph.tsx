@@ -74,23 +74,6 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
                     <circle key={`point-${i}`} cx={xScale(d.processed_clips)} cy={yScale(d.accuracy)} r="2" fill="blue" />
                 ))}
 
-                {/* Final Accuracy Line */}
-                {finalAccuracy > 0 && (
-                    <line 
-                        x1={padding}
-                        y1={yScale(finalAccuracy)}
-                        x2={svgWidth - padding}
-                        y2={yScale(finalAccuracy)}
-                        stroke="red"
-                        strokeDasharray="5,5"
-                        strokeWidth="1" 
-                    />
-                )}
-                {finalAccuracy > 0 && (
-                    <text x={svgWidth - padding - 5} y={yScale(finalAccuracy) - 5} textAnchor="end" fontSize="10" fill="red">
-                        Final Accuracy: {finalAccuracy.toFixed(3)}
-                    </text>
-                )}
             </svg>
         </Box>
     );

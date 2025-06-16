@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Grid, LinearProgress, Stack } from '@mui/material';
+import { SxProps } from '@mui/system';
 
 // 백엔드 API 응답 타입 정의
 interface SysInfo {
@@ -12,6 +13,11 @@ interface SysInfo {
   gpu: string | null;
   gpuMem: string | null;
   gpuUtil: number | null;
+}
+
+// SystemInfo 컴포넌트의 props 타입 정의
+interface SystemInfoProps {
+  sx?: SxProps;
 }
 
 // 개별 정보 항목을 위한 스타일 컴포넌트
@@ -51,7 +57,7 @@ const InfoCard = ({ title, value, unit, progress, color, secondaryText }: {
 };
 
 
-const SystemInfo: React.FC = () => {
+const SystemInfo: React.FC<SystemInfoProps> = ({ sx }) => {
   const [info, setInfo] = useState<SysInfo>({
     cpu: null, ram: null, ram_used_mb: null, ram_total_mb: null,
     gpu: null, gpuMem: null, gpuUtil: null
@@ -92,7 +98,7 @@ const SystemInfo: React.FC = () => {
   const [gpuMemUsed, gpuMemTotal, gpuMemPercentage] = parseGpuMem(info.gpuMem);
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper sx={{ p: 2, ...sx }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', textAlign: 'center' }}>
             시스템 모니터링
         </Typography>

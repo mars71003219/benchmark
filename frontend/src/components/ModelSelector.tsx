@@ -36,11 +36,11 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onSubmit }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <Typography variant="subtitle1" gutterBottom>
-       Huggingface Model Selector
+      <Typography variant="subtitle1" gutterBottom sx={{ mb: 2 }}>
+       HuggingFace Model Selector
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
         <TextField
           fullWidth
           label="모델 ID"

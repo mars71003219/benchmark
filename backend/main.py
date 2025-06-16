@@ -310,23 +310,20 @@ async def get_uploads_endpoint():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
-        while True:
-            # First, send the current global state (as it might have been updated directly)
-            await websocket.send_json(current_video_info)
-            
-            # Then, check for any explicit state updates from the processing thread
-            while not inference_state_queue.empty():
-                try:
-                    latest_state = inference_state_queue.get_nowait()
-                    await websocket.send_json(latest_state)
-                except asyncio.QueueEmpty:
-                    break # No more updates in queue
+        # Send current state immediately upon connection
+        await websocket.send_json(current_video_info.copy()) 
 
-            await asyncio.sleep(0.2) # Regular polling interval
+        while True:
+            # Wait for data from the inference_state_queue
+            state = await inference_state_queue.get()
+            await websocket.send_json(state)
+            inference_state_queue.task_done()
+    except WebSocketDisconnect:
+        print("Main WebSocket disconnected by client.")
     except Exception as e:
         print(f"Main WebSocket error: {e}")
     finally:
-        print("Main WebSocket disconnected.")
+        print("Main WebSocket connection closed.")
 
 @app.post("/stop_infer")
 async def stop_infer_endpoint():

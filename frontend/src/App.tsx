@@ -24,6 +24,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import ConfusionMatrixDisplay from './components/ConfusionMatrixDisplay';
 import ConfusionMatrixGraph from './components/ConfusionMatrixGraph';
 import CumulativeAccuracyGraph from './components/CumulativeAccuracyGraph';
+import MetricsBarChart from './components/MetricsBarChart';
 
 const theme = createTheme({
     palette: {
@@ -430,16 +431,16 @@ function App() {
             <Container maxWidth={false} sx={{ p: '16px !important', height: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0, height: '100%' }}>
                     {/* 좌측: 모델/업로드/설정/시스템 */}
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, minHeight: 0 }}>
+                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, minHeight: 0, minWidth: 350, maxWidth: 350 }}>
                         {/* 모델 로드 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 0, flexShrink: 0, height: 100 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 0, flexShrink: 0, height: 100, width: 350 }}>
                             {renderModelLoader()}
 
                         </Paper>
                         {/* 비디오 업로드 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 200 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 150, width: 350 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                <Typography variant="subtitle1">비디오 테스트셋</Typography>
+                                <Typography variant="subtitle1">Video Upload</Typography>
                                 <Box>
                                 </Box>
                             </Box>
@@ -502,8 +503,8 @@ function App() {
 
                         </Paper>
                         {/* 추론 설정 */}
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1 }}>추론 설정</Typography>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto', width: 350 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2 }}>Inference Setting</Typography>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
                                     <TextField
@@ -536,7 +537,7 @@ function App() {
                                     />
                                 </Grid>
                             </Grid>
-                            <Grid container spacing={1} sx={{ mb: 2 }}>
+                            <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
                                     <Button 
                                         variant={inferenceMode === 'AR' ? 'contained' : 'outlined'} 
@@ -559,7 +560,7 @@ function App() {
                                 </Grid>
                                 <Grid item xs={4}>
                                     <Button variant="outlined" component="label" size="small" fullWidth>
-                                       Anno. Upload 
+                                       Annotation 
                                         <input type="file" hidden accept=".json,.txt" onChange={handleAnnotationUpload} />
                                     </Button>
                                 </Grid>
@@ -570,9 +571,9 @@ function App() {
                                 disabled={!modelId || uploadedFiles.length === 0}
                                 color={isInferring ? 'error' : 'primary'}
                                 fullWidth
-                                sx={{ mt: 1, mb: 1 }}
+                                sx={{ mt: 0, mb: 1 }}
                             >
-                                {isInferring ? '추론 중지' : '추론 실행'}
+                                {isInferring ? 'STOP' : 'RUN'}
                             </Button>
                             <Box sx={{ mt: 0.5 }}>
                                 {classLabels.length > 0 && <Typography variant="caption" color="text.secondary">{classLabels.length}개 클래스</Typography>}
@@ -589,11 +590,7 @@ function App() {
                             </Box>
                         </Paper>
                         {/* 시스템 정보 */}
-                        <Box sx={{ flexGrow: 1, minHeight: 0 }}>
-                            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', overflowY: 'auto', height: '100%' }}>
-                                <SystemInfo />
-                            </Paper>
-                        </Box>
+                        <SystemInfo sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto', width: 350 }} />
                     </Grid>
                     {/* 중앙: 실시간/분석 스트림 및 그래프 */}
                     <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
@@ -642,18 +639,15 @@ function App() {
                         </Paper>
                         {/* 비디오 추론 이벤트 그래프 - 2개 열로 나눔 */}
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1 }}>비디오 추론 이벤트 그래프</Typography>
                             <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                                <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography variant="subtitle2" gutterBottom>혼동 행렬 그래프</Typography>
+                                <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <ConfusionMatrixGraph metrics={inferenceState.metrics} />
                                 </Grid>
-                                <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography variant="subtitle2" gutterBottom>누적 정확도 그래프</Typography>
-                                    <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
+                                <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                                    <MetricsBarChart metrics={metricsHistory[metricsHistory.length - 1]} />
                                 </Grid>
-                                <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    {/* 세 번째 열 */}
+                                <Grid item xs={12} md={12} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
                                 </Grid>
                             </Grid>
                         </Paper>
