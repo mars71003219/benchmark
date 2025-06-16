@@ -373,12 +373,12 @@ function App() {
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Container maxWidth={false} sx={{ p: '16px !important', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <Grid container spacing={1} sx={{ flexGrow: 1, minHeight: 0, height: '100%' }}>
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, minHeight: 0}}>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 0, flexShrink: 0, height: 120 }}>
+                <Grid container spacing={1} sx={{ flexGrow: 1, minHeight: 0 }}>
+                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 1, flexShrink: 0 }}>
                             {renderModelLoader()}
                         </Paper>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height: 200 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1, flexShrink: 0, overflowY: 'auto' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                 <Typography variant="subtitle1">Video Upload</Typography>
                                 <Box>
@@ -441,7 +441,7 @@ function App() {
                                 </Select>
                             </FormControl>
                         </Paper>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 0, flexShrink: 0, overflowY: 'auto', height:320}}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto'}}>
                             <Typography variant="subtitle1" sx={{ mb: 3 }}>Inference Setting</Typography>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
@@ -529,64 +529,70 @@ function App() {
                         </Paper>
                         <SystemInfo sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto'}} />
                     </Grid>
-                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', pt: 4 }}>
-                        <Grid container sx={{ flexGrow: 0, flexShrink: 0, height: '400px' }}>
-                            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginRight: '8px' }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2 }}>
-                                        <Typography variant="subtitle1" color="white">실시간 추론 영상 스트림</Typography>
-                                    </Box>
-                                    <Box sx={{ width: '100%', height: 'calc(100% - 48px)', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2 }}>
-                                        {realtimeOverlayFrame ? (
-                                            <img src={realtimeOverlayFrame} alt="Realtime Overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                        ) : (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
-                                                <Typography sx={{ ml: 2 }}>실시간 추론 스트림 로딩...</Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginLeft: '8px' }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2 }}>
-                                        <Typography variant="subtitle1" color="white">추론 결과 분석</Typography>
-                                    </Box>
-                                    <Box sx={{ width: '100%', height: 'calc(100% - 48px)', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2 }}>
-                                        {selectedVideo ? (
-                                            <VideoPlayer videoUrl={selectedVideoUrl} />
-                                        ) : (
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
-                                                <Typography>분석 비디오를 선택하세요</Typography>
-                                                <Button variant="contained" size="small" onClick={handleOpenAnalysisVideoSelect} sx={{ mt: 2 }}>추론 결과 영상 열기</Button>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                        </Grid>
-
-                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-                            <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                                {/* 1. 혼동 행렬 그래프 (왼쪽 절반) */}
-                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                    <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
+                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+                        {/* 상단 스트림 영역 - flex: 3으로 설정하여 30% 높이 */}
+                        <Box sx={{ flex: 3, display: 'flex', minHeight: 0, mb: 1 }}>
+                            <Grid container sx={{ flexGrow: 1 }}>
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginRight: '8px', minHeight: 0 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2, flexShrink: 0 }}>
+                                            <Typography variant="subtitle1" color="white">실시간 추론 영상 스트림</Typography>
+                                        </Box>
+                                        <Box sx={{ flex: 1, width: '100%', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2, minHeight: 0 }}>
+                                            {realtimeOverlayFrame ? (
+                                                <img src={realtimeOverlayFrame} alt="Realtime Overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                            ) : (
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
+                                                    <Typography sx={{ ml: 2 }}>실시간 추론 스트림 로딩...</Typography>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    </Paper>
                                 </Grid>
-
-                                {/* 오른쪽 절반 - 성능 지표 및 누적 정확도 그래프 */}
-                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                    <MetricsBarChart metrics={metricsHistory[metricsHistory.length - 1]} />
-                                    <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginLeft: '8px', minHeight: 0 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2, flexShrink: 0 }}>
+                                            <Typography variant="subtitle1" color="white">추론 결과 분석</Typography>
+                                        </Box>
+                                        <Box sx={{ flex: 1, width: '100%', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2, minHeight: 0 }}>
+                                            {selectedVideo ? (
+                                                <VideoPlayer videoUrl={selectedVideoUrl} />
+                                            ) : (
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
+                                                    <Typography>분석 비디오를 선택하세요</Typography>
+                                                    <Button variant="contained" size="small" onClick={handleOpenAnalysisVideoSelect} sx={{ mt: 2 }}>추론 결과 영상 열기</Button>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    </Paper>
                                 </Grid>
                             </Grid>
-                        </Paper>
+                        </Box>
+                        
+                        {/* 하단 메트릭스 영역 - flex: 7로 설정하여 70% 높이 */}
+                        <Box sx={{ flex: 7, minHeight: 0 }}>
+                            <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                <Grid container spacing={2} sx={{ flexGrow: 1, height: '100%' }}>
+                                    {/* 1. 혼동 행렬 그래프 (왼쪽 절반) */}
+                                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                        <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
+                                    </Grid>
+
+                                    {/* 오른쪽 절반 - 성능 지표 및 누적 정확도 그래프 */}
+                                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                        <MetricsBarChart metrics={metricsHistory[metricsHistory.length - 1]} />
+                                        <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
+                                    </Grid>
+                                </Grid>
+                            </Paper>
+                        </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', minHeight: 0 }}>
+                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
                         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
                         </Box>
-                        <Box sx={{ flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                             <ConfusionMatrixGraph metrics={inferenceState.metrics} />
                         </Box>
                     </Grid>
