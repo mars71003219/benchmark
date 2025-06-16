@@ -21,9 +21,9 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
     const maxProcessedClips = Math.max(...cumulativeAccuracyHistory.map(d => d.processed_clips), 0);
     const maxAccuracy = 1.0; // Accuracy is always between 0 and 1
 
-    const svgWidth = 800;
+    const svgWidth = 450;
     const svgHeight = 200;
-    const padding = 30; // Padding for axes labels
+    const padding = 40; // Padding for axes labels
 
     const xScale = (value: number) => (value / maxProcessedClips) * (svgWidth - 2 * padding) + padding;
     const yScale = (value: number) => svgHeight - padding - (value / maxAccuracy) * (svgHeight - 2 * padding);

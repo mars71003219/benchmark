@@ -568,20 +568,14 @@ function App() {
 
                         <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                             <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                                {/* --- 1번째 행 --- */}
                                 {/* 1. 혼동 행렬 그래프 (왼쪽 절반) */}
-                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <ConfusionMatrixGraph metrics={inferenceState.metrics} />
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                    <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
                                 </Grid>
 
-                                {/* 2. 성능 지표 막대 차트 (오른쪽 절반) */}
-                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                {/* 오른쪽 절반 - 성능 지표 및 누적 정확도 그래프 */}
+                                <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                     <MetricsBarChart metrics={metricsHistory[metricsHistory.length - 1]} />
-                                </Grid>
-
-                                {/* --- 2번째 행 --- */}
-                                {/* 3. 누적 정확도 그래프 (전체 너비) */}
-                                <Grid item xs={12} md={12} sx={{ display: 'flex', flexDirection: 'column' }}>
                                     <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
                                 </Grid>
                             </Grid>
@@ -589,14 +583,12 @@ function App() {
                     </Grid>
 
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', minHeight: 0 }}>
-                        <Paper sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
-                            <Typography variant="h6" gutterBottom>실시간 추론 이벤트</Typography>
+                        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
                             <InferenceResultTable events={inferenceState.events} classLabels={classLabels} />
-                        </Paper>
-                        <Paper sx={{ p: 2, flexGrow: 0, display: 'flex', flexDirection: 'column', mt: 2 }}>
-                            <Typography variant="h6" gutterBottom>실시간 추론 메트릭</Typography>
-                            <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
-                        </Paper>
+                        </Box>
+                        <Box sx={{ flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
+                            <ConfusionMatrixGraph metrics={inferenceState.metrics} />
+                        </Box>
                     </Grid>
                 </Grid>
                 <Dialog open={isAnalysisVideoSelectOpen} onClose={handleCloseAnalysisVideoSelect} maxWidth="sm" fullWidth>
