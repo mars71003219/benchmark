@@ -21,7 +21,7 @@ interface ConfusionMatrixDisplayProps {
 const ConfusionMatrixDisplay: React.FC<ConfusionMatrixDisplayProps> = ({ metrics }) => {
   if (!metrics) {
     return (
-      <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+      <Box sx={{ p: 2, textAlign: 'left', color: 'text.secondary' }}>
         추론 메트릭을 기다리는 중...
       </Box>
     );
@@ -29,7 +29,7 @@ const ConfusionMatrixDisplay: React.FC<ConfusionMatrixDisplayProps> = ({ metrics
 
   return (
     <TableContainer component={Paper} sx={{ mt: 2, p: 2 }}>
-      <Typography variant="h6" gutterBottom>실시간 추론 메트릭</Typography>
+      <Typography variant="h6" gutterBottom sx={{ textAlign: 'center' }}>Model Evaluation Metrics</Typography>
       <Table size="small">
         <TableHead>
           <TableRow>

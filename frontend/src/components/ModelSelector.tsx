@@ -36,7 +36,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onSubmit }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <Typography variant="subtitle1" gutterBottom sx={{ mb: 2 }}>
+      <Typography variant="subtitle1" gutterBottom sx={{ mb: 2, textAlign: 'left', fontWeight: 'bold' }}>
        HuggingFace Model Selector
       </Typography>
 

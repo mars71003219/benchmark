@@ -375,12 +375,12 @@ function App() {
             <Container maxWidth={false} sx={{ p: '16px !important', height: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Grid container spacing={1} sx={{ flexGrow: 1, minHeight: 0 }}>
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
-                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flexGrow: 1, flexShrink: 0 }}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0 }}>
                             {renderModelLoader()}
                         </Paper>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1, flexShrink: 0, overflowY: 'auto' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="subtitle1">Video Upload</Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Video Upload</Typography>
                                 <Box>
                                 </Box>
                             </Box>
@@ -442,7 +442,7 @@ function App() {
                             </FormControl>
                         </Paper>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto'}}>
-                            <Typography variant="subtitle1" sx={{ mb: 3 }}>Inference Setting</Typography>
+                            <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: 'bold'}}>Inference Setting</Typography>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
                                     <TextField

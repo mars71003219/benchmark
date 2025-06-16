@@ -22,7 +22,7 @@ const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, cla
   return (
     <Paper sx={{ width: '100%', flexGrow: 1, p: 2, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <Typography variant="h6" gutterBottom sx={{ flexShrink: 0 }}>
-        실시간 추론 이벤트
+        Inference Results
       </Typography>
       <TableContainer sx={{ flexGrow: 1, overflow: 'auto', maxHeight: '100%' }}>
         <Table stickyHeader size="small">
@@ -56,7 +56,7 @@ const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, cla
             })}
             {detectionEvents.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} align="center">추론 이벤트를 기다리는 중...</TableCell>
+                <TableCell colSpan={8} align="left">추론 이벤트를 기다리는 중...</TableCell>
               </TableRow>
             )}
           </TableBody>

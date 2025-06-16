@@ -59,7 +59,7 @@ const ConfusionMatrixGraph: React.FC<ConfusionMatrixGraphProps> = ({ metrics }) 
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', p: 1.5 }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ mb: 1.0, fontSize: '1.2em', width: '90%', textAlign: 'center' }}>Confusion Matrix</Typography>
+            <Typography variant="subtitle2" gutterBottom sx={{ mb: 1.0, fontSize: '1.2em', width: '110%', textAlign: 'center' }}>Confusion Matrix</Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: 'fit-content' }}>
 
