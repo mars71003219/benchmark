@@ -1,5 +1,4 @@
 // frontend/src/components/InferenceResultTable.tsx
-
 import React from 'react';
 import {
   Paper, Table, TableBody, TableCell,
@@ -17,7 +16,7 @@ interface InferenceResultTableProps {
 }
 
 const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, classLabels }) => {
-  const detectionEvents = events.filter(e => e.type === 'detection' && e.data);
+  const detectionEvents = events.filter(e => e.type === 'detection' && e.data).reverse();
 
   return (
     <Paper sx={{ width: '100%', p: 2, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>

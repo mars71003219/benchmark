@@ -9,49 +9,37 @@ interface VideoPlayerProps {
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
   return (
-    <Box sx={{ 
-      width: '100%', 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      minHeight: 0 
-    }}>
-      <Typography 
-        variant="subtitle2" 
-        gutterBottom 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 1,
-          color: 'white',
-          flexShrink: 0,
-          mb: 1
-        }}
-      >
-        <VideocamIcon fontSize="small" />
-        비디오 플레이어
-      </Typography>
-
-      <Box
-        sx={{
-          flex: 1,
-          position: 'relative',
+    <Box
+      sx={{
+        width: '100%',
+        position: 'relative',
+        aspectRatio: '16/9', // 16:9 비율 고정
+        bgcolor: 'black',
+        borderRadius: 1,
+        overflow: 'hidden',
+        minHeight: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      {videoUrl ? (
+        <Box sx={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
           width: '100%',
-          minHeight: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        {videoUrl ? (
+          height: '100%',
+        }}>
           <ReactPlayer
             url={videoUrl}
             width="100%"
             height="100%"
             controls={true}
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%'
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              objectFit: 'contain',
+              background: 'black'
             }}
             config={{
               file: {
@@ -59,18 +47,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl }) => {
                   style: {
                     width: '100%',
                     height: '100%',
-                    objectFit: 'contain'
+                    objectFit: 'contain',
+                    background: 'black'
                   }
                 }
               }
             }}
           />
-        ) : (
-          <Typography color="white" variant="body2">
-            재생할 비디오를 선택해주세요
-          </Typography>
-        )}
-      </Box>
+        </Box>
+      ) : (
+        <Typography color="white" variant="body2">
+          재생할 비디오를 선택해주세요
+        </Typography>
+      )}
     </Box>
   );
 };

@@ -3,7 +3,10 @@ import { Box, Typography } from '@mui/material';
 
 interface MetricsBarChartProps {
     metrics: {
-        accuracy: number;
+        tp: number;
+        tn: number;
+        fp: number;
+        fn: number;
         precision: number;
         recall: number;
         f1_score: number;
@@ -19,8 +22,12 @@ const MetricsBarChart: React.FC<MetricsBarChartProps> = ({ metrics }) => {
         );
     }
 
+    // Calculate accuracy
+    const total = metrics.tp + metrics.tn + metrics.fp + metrics.fn;
+    const accuracy = total > 0 ? (metrics.tp + metrics.tn) / total : 0;
+
     const data = [
-        { label: 'Accuracy', value: metrics.accuracy ?? 0, color: '#1f77b4' }, // Blue
+        { label: 'Accuracy', value: accuracy, color: '#1f77b4' }, // Blue
         { label: 'Precision', value: metrics.precision ?? 0, color: '#ff7f0e' }, // Orange
         { label: 'Recall', value: metrics.recall ?? 0, color: '#2ca02c' },     // Green
         { label: 'F1 Score', value: metrics.f1_score ?? 0, color: '#d62728' },   // Red
@@ -29,7 +36,12 @@ const MetricsBarChart: React.FC<MetricsBarChartProps> = ({ metrics }) => {
     const svgWidth = 450;
     const svgHeight = 200;
     const padding = 40;
-    const barWidth = (svgWidth - 2 * padding) / data.length - 10; // Reduced bar width for spacing
+    const gap = 35; // 막대 사이 간격
+    const extraLeftGap = 30; // y축과 첫번째 막대 사이 간격
+    const barShrink = 10; // 막대 너비를 줄이는 값
+    const n = data.length;
+    const totalGap = gap * (n - 1);
+    const barWidth = ((svgWidth - 2 * padding - totalGap - extraLeftGap) / n) - barShrink;
 
     const yScale = (value: number) => svgHeight - padding - (value / 1.0) * (svgHeight - 2 * padding);
 
@@ -57,7 +69,7 @@ const MetricsBarChart: React.FC<MetricsBarChartProps> = ({ metrics }) => {
 
                 {/* Bars and Labels */}
                 {data.map((item, i) => {
-                    const x = padding + i * (barWidth + 10) + 5; // +5 for minor centering
+                    const x = padding + extraLeftGap + i * (barWidth + gap);
                     const y = yScale(item.value);
                     const barHeight = svgHeight - padding - y;
                     return (

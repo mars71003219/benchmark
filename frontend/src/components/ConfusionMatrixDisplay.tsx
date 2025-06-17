@@ -28,7 +28,7 @@ const ConfusionMatrixDisplay: React.FC<ConfusionMatrixDisplayProps> = ({ metrics
   }
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 20, p: 2 }}>
+    <TableContainer component={Paper} sx={{ mt: 10, p: 2 }}>
       <Typography variant="h6" gutterBottom sx={{ textAlign: 'center' }}>Model Evaluation Metrics</Typography>
       <Table size="small">
         <TableHead>

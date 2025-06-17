@@ -45,50 +45,60 @@ const initialState: InferenceState = {
   metrics: { tp: 0, tn: 0, fp: 0, fn: 0, precision: 0.0, recall: 0.0, f1_score: 0.0 },
 };
 
-// 이제 훅은 연결 중일 때 null을 반환할 수 있음
-export const useWebSocket = (url: string): InferenceState | null => {
-  const [data, setData] = useState<InferenceState | null>(null); // 초기 상태를 null로 변경
-  const ws = useRef<WebSocket | null>(null);
+interface WebSocketState {
+    is_inferencing: boolean;
+    current_video: string | null;
+    current_progress: number;
+    total_videos: number;
+    processed_videos: number;
+    events: any[];
+    cumulative_accuracy: number;
+    metrics: any;
+}
 
-  useEffect(() => {
-    const connect = () => {
-      ws.current = new WebSocket(url);
+export function useWebSocket(url: string) {
+    const [state, setState] = useState<WebSocketState | null>(null);
+    const [ws, setWs] = useState<WebSocket | null>(null);
 
-      ws.current.onopen = () => {
-        console.log("WebSocket connected");
-        // 연결 성공 시 초기 상태로 설정
-        setData(initialState); 
-      };
+    useEffect(() => {
+        const socket = new WebSocket(url);
+        setWs(socket);
 
-      ws.current.onmessage = (event) => {
-        try {
-          const parsedData = JSON.parse(event.data);
-          setData(parsedData);
-        } catch (error) {
-          console.error("Failed to parse WebSocket message:", error);
-        }
-      };
+        socket.onopen = () => {
+            console.log('WebSocket 연결됨');
+        };
 
-      ws.current.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
+        socket.onmessage = (event) => {
+            if (event.data === "ping") {
+                socket.send("pong");
+                return;
+            }
+            try {
+                const data = JSON.parse(event.data);
+                setState(data);
+            } catch (e) {
+                console.error('WebSocket 메시지 파싱 오류:', e);
+            }
+        };
 
-      ws.current.onclose = () => {
-        console.log("WebSocket disconnected, attempting to reconnect...");
-        setData(null); // 연결 종료 시 다시 null로 설정
-        setTimeout(connect, 3000);
-      };
-    };
+        socket.onerror = (error) => {
+            console.error('WebSocket 오류:', error);
+        };
 
-    connect();
+        socket.onclose = () => {
+            console.log('WebSocket 연결 종료');
+            // 연결이 끊어지면 3초 후 재연결 시도
+            setTimeout(() => {
+                setWs(null);
+            }, 3000);
+        };
 
-    return () => {
-      if (ws.current) {
-        ws.current.onclose = null; // 재연결 로직 방지
-        ws.current.close();
-      }
-    };
-  }, [url]);
+        return () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        };
+    }, [url]);
 
-  return data;
-};
+    return state;
+}

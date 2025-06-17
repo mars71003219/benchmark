@@ -25,6 +25,7 @@ import ConfusionMatrixGraph from './components/ConfusionMatrixGraph';
 import CumulativeAccuracyGraph from './components/CumulativeAccuracyGraph';
 import MetricsBarChart from './components/MetricsBarChart';
 import VideoPlayer from './components/VideoPlayer';
+import EventLog from './components/EventLog';
 
 const theme = createTheme({
     palette: {
@@ -112,6 +113,10 @@ function App() {
             console.log('실시간 오버레이 WebSocket 연결됨');
         };
         ws.onmessage = (event) => {
+            if (event.data === "ping") {
+                ws?.send("pong");
+                return;
+            }
             setRealtimeOverlayFrame(`data:image/jpeg;base64,${event.data}`);
         };
         ws.onerror = (error) => {
@@ -120,6 +125,11 @@ function App() {
         ws.onclose = () => {
             console.log('실시간 오버레이 WebSocket 연결 해제됨');
             setRealtimeOverlayFrame(null);
+            setTimeout(() => {
+                if (ws) {
+                    ws.close();
+                }
+            }, 3000);
         };
         return () => {
             if (ws) {
@@ -379,14 +389,21 @@ function App() {
                             {renderModelLoader()}
                         </Paper>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1, flexShrink: 0, overflowY: 'auto', mb: 1 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Video Upload</Typography>
                                 <Box>
                                 </Box>
                             </Box>
-                            {totalFilesToUpload > 0 && (
+                            {totalFilesToUpload > 0 ? (
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                     업로드 중: {uploadedFileCount} / {totalFilesToUpload} ({((uploadedFileCount / totalFilesToUpload) * 100).toFixed(0)}%)
+                                </Typography>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    {uploadedFiles.length > 0 
+                                        ? `현재 업로드된 비디오: ${uploadedFiles.length}개`
+                                        : '업로드된 비디오가 없습니다.'
+                                    }
                                 </Typography>
                             )}
                             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -435,6 +452,17 @@ function App() {
                                                 >
                                                     영상시간: {f.duration ? f.duration.toFixed(2) + 's' : '로딩 중...'}
                                                 </Typography>
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent MenuItem from closing
+                                                        handleRemoveFile(f.name);
+                                                    }}
+                                                    sx={{ ml: 'auto' }} // Push to the right
+                                                >
+                                                    <DeleteIcon sx={{ fontSize: 20 }} />
+                                                </IconButton>
                                             </Box>
                                         </MenuItem>
                                     ))}
@@ -655,7 +683,13 @@ function App() {
                             <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                                 <Grid container spacing={2} sx={{ flexGrow: 1, height: '100%' }}>
                                     {/* 1. 혼동 행렬 그래프 (왼쪽 절반) */}
-                                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%', alignItems: 'center' }}>
+                                        <Box sx={{ mt: 7 }}>
+                                            <Typography variant="subtitle2" gutterBottom sx={{ mb: 4, fontSize: '1.2em', width: '90%', textAlign: 'center', whiteSpace: 'nowrap' }}>Current Inferencing Video</Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                                {inferenceState.current_video ? inferenceState.current_video : '추론 중인 비디오 없음'}
+                                            </Typography>
+                                        </Box>
                                         <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
                                     </Grid>
 

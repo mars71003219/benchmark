@@ -1,6 +1,6 @@
 # /backend/main.py
 
-from fastapi import FastAPI, UploadFile, File, WebSocket, HTTPException, BackgroundTasks, Request
+from fastapi import FastAPI, UploadFile, File, WebSocket, HTTPException, BackgroundTasks, Request, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from datetime import datetime
@@ -14,9 +14,10 @@ import os
 import subprocess
 import sys
 import base64
-
+import csv
 import psutil
 from pynvml import *
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils import (
     load_model, process_video, create_overlay_video,
@@ -111,8 +112,8 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
         try: inference_state_queue.put_nowait(current_video_info.copy())
         except asyncio.QueueFull: pass
         
-        all_results = []
-        final_results = []  # 최종 결과를 저장할 리스트
+        # final_results = []  # 최종 결과를 저장할 리스트
+        overlay_tasks = []  # 오버레이 비디오 생성 작업을 저장할 리스트
 
         for i, video_path in enumerate(video_files):
             if stop_checker():
@@ -163,6 +164,14 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
 
                 # 비디오 클립 단위 결과 계산
                 if video_results:
+                    csv_path = save_dir / "results.csv"
+                    f_existed = csv_path.is_file()
+                    with open(csv_path, 'a', newline='') as f:
+                        writer = csv.DictWriter(f, fieldnames=['video_name', 'start_time', 'end_time', 'prediction_label', 'start_frame', 'end_frame', 'inference_time_ms', 'inference_fps'])
+                        if not f_existed:
+                            writer.writeheader()
+                        writer.writerows(video_results)
+
                     # 모든 라벨이 Non으로 시작하는지 확인
                     all_labels = [r["prediction_label"] for r in video_results]
                     all_are_non = all(label.lower().startswith("non") for label in all_labels)
@@ -184,7 +193,7 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                             "video_name": video_path.name,
                             "final_label": final_label_for_video
                         }
-                        final_results.append(final_result)
+                        # final_results.append(final_result)
                         
                         # Ground truth와 비교하여 메트릭 업데이트
                         if "AR" in video_annotations_for_current_video:
@@ -215,6 +224,11 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                                 }
                                 try: inference_state_queue.put_nowait(current_video_info.copy())
                                 except asyncio.QueueFull: pass
+
+                    # 오버레이 비디오 생성 작업 추가
+                    if video_results:
+                        overlay_path = save_dir / f"{video_path.stem}_overlay.mp4"
+                        overlay_tasks.append((video_path, video_results, overlay_path))
                 
                 current_video_info["events"].append({"type": "video_processed", "video": video_path.name, "timestamp": datetime.now().isoformat()})
                 current_video_info["processed_videos"] = i + 1
@@ -227,14 +241,39 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                 try: inference_state_queue.put_nowait(current_video_info.copy())
                 except asyncio.QueueFull: pass
         
-        # 최종 결과를 CSV 파일로 저장
-        if final_results:
-            import csv
-            csv_path = save_dir / "final_results.csv"
-            with open(csv_path, 'w', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=['video_name', 'final_label'])
-                writer.writeheader()
-                writer.writerows(final_results)
+            # 최종 결과를 CSV 파일로 저장
+            if final_result:
+                csv_path = save_dir / "final_results.csv"
+                field_names = ['video_name', 'final_label']
+
+                # 1. 파일 존재 여부를 미리 확인한다.
+                file_exists = csv_path.is_file()
+
+                # 2. 'a'(append) 모드로 파일을 연다.
+                with open(csv_path, 'a', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=field_names)
+
+                    # 3. 파일이 없을 때만 헤더를 쓴다.
+                    if not file_exists:
+                        writer.writeheader()
+
+                    # 4. writerow() 메서드로 단일 딕셔너리를 추가한다.
+                    writer.writerow(final_result)
+
+            # 멀티스레드로 오버레이 비디오 생성
+            if overlay_tasks:
+                with ThreadPoolExecutor(max_workers=min(os.cpu_count(), len(overlay_tasks))) as executor:
+                    futures = []
+                    for video_path, results, output_path in overlay_tasks:
+                        future = executor.submit(create_overlay_video, video_path, results, output_path)
+                        futures.append(future)
+                    
+                    # 모든 오버레이 비디오 생성 완료 대기
+                    for future in as_completed(futures):
+                        try:
+                            future.result()
+                        except Exception as e:
+                            print(f"오버레이 비디오 생성 중 에러 발생: {e}")
         
         current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
     finally:
@@ -318,6 +357,15 @@ async def websocket_endpoint(websocket: WebSocket):
             state = await inference_state_queue.get()
             await websocket.send_json(state)
             inference_state_queue.task_done()
+            
+            # Send ping to keep connection alive
+            await websocket.send_text("ping")
+            try:
+                pong = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+                if pong != "pong":
+                    raise WebSocketDisconnect()
+            except asyncio.TimeoutError:
+                raise WebSocketDisconnect()
     except WebSocketDisconnect:
         print("Main WebSocket disconnected by client.")
     except Exception as e:
@@ -473,6 +521,17 @@ async def websocket_realtime_overlay_endpoint(websocket: WebSocket):
             frame_data = await realtime_frame_queue.get() # Blocking get until a frame is available
             encoded_frame = base64.b64encode(frame_data).decode('utf-8')
             await websocket.send_text(encoded_frame)
+            
+            # Send ping to keep connection alive
+            await websocket.send_text("ping")
+            try:
+                pong = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+                if pong != "pong":
+                    raise WebSocketDisconnect()
+            except asyncio.TimeoutError:
+                raise WebSocketDisconnect()
+    except WebSocketDisconnect:
+        print("실시간 오버레이 WebSocket 연결이 클라이언트에 의해 종료되었습니다.")
     except Exception as e:
         print(f"실시간 오버레이 WebSocket 오류: {e}")
     finally:

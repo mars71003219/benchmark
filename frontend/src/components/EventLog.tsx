@@ -58,7 +58,7 @@ const EventLog: React.FC<EventLogProps> = ({ events }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        이벤트 로그
+        Event Log 
       </Typography>
 
       <Paper sx={{ maxHeight: 400, overflow: 'auto' }}>

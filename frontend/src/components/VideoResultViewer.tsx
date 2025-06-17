@@ -66,7 +66,9 @@ const VideoResultViewer: React.FC = () => {
                                 style={{
                                     position: 'absolute',
                                     top: 0,
-                                    left: 0
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0
                                 }}
                             />
                             : <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography color="white">생성된 비디오 없음</Typography></Box>
