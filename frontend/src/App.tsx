@@ -479,7 +479,7 @@ function App() {
                                         value={frameInterval}
                                         onChange={(e) => setFrameInterval(Number(e.target.value))}
                                         size="small"
-                                        fullWidth sx={{ fontSize: '0.7rem' }}
+                                        fullWidth sx={{ fontSize: '0.7rem', input: { textAlign: 'center' } }}
                                     />
                                 </Grid>
                                 <Grid item xs={4}>
@@ -489,7 +489,7 @@ function App() {
                                         value={inferPeriod}
                                         onChange={(e) => setInferPeriod(Number(e.target.value))}
                                         size="small"
-                                        fullWidth sx={{ fontSize: '0.7rem' }}
+                                        fullWidth sx={{ fontSize: '0.7rem', input: { textAlign: 'center' } }}
                                     />
                                 </Grid>
                                 <Grid item xs={4}>
@@ -499,7 +499,7 @@ function App() {
                                         value={batchFrames}
                                         onChange={(e) => setBatchFrames(Number(e.target.value))}
                                         size="small"
-                                        fullWidth sx={{ fontSize: '0.7rem' }}
+                                        fullWidth sx={{ fontSize: '0.7rem', input: { textAlign: 'center' } }}
                                     />
                                 </Grid>
                             </Grid>
