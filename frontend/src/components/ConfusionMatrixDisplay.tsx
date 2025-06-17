@@ -28,47 +28,47 @@ const ConfusionMatrixDisplay: React.FC<ConfusionMatrixDisplayProps> = ({ metrics
   }
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 2, p: 2 }}>
+    <TableContainer component={Paper} sx={{ mt: 20, p: 2 }}>
       <Typography variant="h6" gutterBottom sx={{ textAlign: 'center' }}>Model Evaluation Metrics</Typography>
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>지표</TableCell>
-            <TableCell align="right">값</TableCell>
+            <TableCell sx={{ height: '40px' }}>지표</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>값</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           <TableRow>
-            <TableCell>True Positive (TP)</TableCell>
-            <TableCell align="right">{metrics.tp}</TableCell>
+            <TableCell sx={{ height: '40px' }}>True Positive (TP)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.tp}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>True Negative (TN)</TableCell>
-            <TableCell align="right">{metrics.tn}</TableCell>
+            <TableCell sx={{ height: '40px' }}>True Negative (TN)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.tn}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>False Positive (FP)</TableCell>
-            <TableCell align="right">{metrics.fp}</TableCell>
+            <TableCell sx={{ height: '40px' }}>False Positive (FP)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.fp}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>False Negative (FN)</TableCell>
-            <TableCell align="right">{metrics.fn}</TableCell>
+            <TableCell sx={{ height: '40px' }}>False Negative (FN)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.fn}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>정확도 (Accuracy)</TableCell>
-            <TableCell align="right">{((metrics.tp + metrics.tn) / (metrics.tp + metrics.tn + metrics.fp + metrics.fn) || 0).toFixed(2)}</TableCell>
+            <TableCell sx={{ height: '40px' }}>정확도 (Accuracy)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{((metrics.tp + metrics.tn) / (metrics.tp + metrics.tn + metrics.fp + metrics.fn) || 0).toFixed(2)}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>정밀도 (Precision)</TableCell>
-            <TableCell align="right">{metrics.precision.toFixed(2)}</TableCell>
+            <TableCell sx={{ height: '40px' }}>정밀도 (Precision)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.precision.toFixed(2)}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>재현율 (Recall)</TableCell>
-            <TableCell align="right">{metrics.recall.toFixed(2)}</TableCell>
+            <TableCell sx={{ height: '40px' }}>재현율 (Recall)</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.recall.toFixed(2)}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>F1-Score</TableCell>
-            <TableCell align="right">{metrics.f1_score.toFixed(2)}</TableCell>
+            <TableCell sx={{ height: '40px' }}>F1-Score</TableCell>
+            <TableCell align="right" sx={{ height: '40px' }}>{metrics.f1_score.toFixed(2)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

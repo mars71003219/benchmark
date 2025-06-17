@@ -534,33 +534,114 @@ function App() {
                         <Box sx={{ flex: 3, display: 'flex', minHeight: 0, mb: 2 }}>
                             <Grid container sx={{ flexGrow: 1 }}>
                                 <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginRight: '8px', minHeight: 0 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2, flexShrink: 0 }}>
-                                            <Typography variant="subtitle1" color="white">실시간 추론 영상 스트림</Typography>
+                                    <Paper sx={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        bgcolor: 'black', 
+                                        borderRadius: 1, 
+                                        overflow: 'hidden', 
+                                        flexGrow: 1, 
+                                        marginRight: '8px', 
+                                        minHeight: 0,
+                                        p: 2
+                                    }}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            alignItems: 'center', 
+                                            flexShrink: 0,
+                                            mb: 1
+                                        }}>
+                                            <Typography variant="subtitle1" color="white">
+                                                실시간 추론 영상 스트림
+                                            </Typography>
                                         </Box>
-                                        <Box sx={{ flex: 1, width: '100%', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2, minHeight: 0 }}>
+                                        <Box sx={{ 
+                                            flex: 1, 
+                                            width: '100%', 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            alignItems: 'center', 
+                                            minHeight: 0,
+                                            position: 'relative'
+                                        }}>
                                             {realtimeOverlayFrame ? (
-                                                <img src={realtimeOverlayFrame} alt="Realtime Overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                                <img 
+                                                    src={realtimeOverlayFrame} 
+                                                    alt="Realtime Overlay" 
+                                                    style={{ 
+                                                        maxWidth: '100%', 
+                                                        maxHeight: '100%', 
+                                                        width: 'auto',
+                                                        height: 'auto',
+                                                        objectFit: 'contain'
+                                                    }} 
+                                                />
                                             ) : (
-                                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
-                                                    <Typography sx={{ ml: 2 }}>실시간 추론 스트림 로딩...</Typography>
+                                                <Box sx={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'center', 
+                                                    alignItems: 'center', 
+                                                    color: 'white' 
+                                                }}>
+                                                    <Typography>실시간 추론 스트림 로딩...</Typography>
                                                 </Box>
                                             )}
                                         </Box>
                                     </Paper>
                                 </Grid>
                                 <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Paper sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'black', borderRadius: 1, overflow: 'hidden', flexGrow: 1, marginLeft: '8px', minHeight: 0 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 2, pt: 2, pb: 2, flexShrink: 0 }}>
-                                            <Typography variant="subtitle1" color="white">추론 결과 분석</Typography>
+                                    <Paper sx={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        bgcolor: 'black', 
+                                        borderRadius: 1, 
+                                        overflow: 'hidden', 
+                                        flexGrow: 1, 
+                                        marginLeft: '8px', 
+                                        minHeight: 0,
+                                        p: 2
+                                    }}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            alignItems: 'center', 
+                                            flexShrink: 0,
+                                            mb: 1
+                                        }}>
+                                            <Typography variant="subtitle1" color="white">
+                                                추론 결과 분석
+                                            </Typography>
                                         </Box>
-                                        <Box sx={{ flex: 1, width: '100%', mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 2, minHeight: 0 }}>
+                                        <Box sx={{ 
+                                            flex: 1, 
+                                            width: '100%', 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            alignItems: 'center', 
+                                            minHeight: 0
+                                        }}>
                                             {selectedVideo ? (
                                                 <VideoPlayer videoUrl={selectedVideoUrl} />
                                             ) : (
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'white' }}>
-                                                    <Typography>분석 비디오를 선택하세요</Typography>
-                                                    <Button variant="contained" size="small" onClick={handleOpenAnalysisVideoSelect} sx={{ mt: 2 }}>추론 결과 영상 열기</Button>
+                                                <Box sx={{ 
+                                                    display: 'flex', 
+                                                    flexDirection: 'column', 
+                                                    justifyContent: 'center', 
+                                                    alignItems: 'center', 
+                                                    color: 'white',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    <Typography variant="body2" sx={{ mb: 2 }}>
+                                                        분석 비디오를 선택하세요
+                                                    </Typography>
+                                                    <Button 
+                                                        variant="contained" 
+                                                        size="small" 
+                                                        onClick={handleOpenAnalysisVideoSelect}
+                                                    >
+                                                        추론 결과 영상 열기
+                                                    </Button>
                                                 </Box>
                                             )}
                                         </Box>

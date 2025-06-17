@@ -45,7 +45,7 @@ def process_video(
     all_results = []
     
     current_pos_frame = 0
-    while current_pos_frame + sampling_window_frames < total_frames:
+    while current_pos_frame < total_frames:
         time.sleep(0.01)
 
         if stop_checker():
@@ -53,11 +53,17 @@ def process_video(
             break
 
         sampling_start_frame = current_pos_frame
-        overlay_start_frame = sampling_end_frame = current_pos_frame + sampling_window_frames
-        overlay_end_frame = overlay_start_frame + sliding_window_step_frames
+        sampling_end_frame = min(current_pos_frame + sampling_window_frames, total_frames)
+        overlay_start_frame = current_pos_frame
+        overlay_end_frame = min(overlay_start_frame + sliding_window_step_frames, total_frames)
         
+        actual_num_frames_to_sample = min(num_frames_to_sample, sampling_end_frame - sampling_start_frame)
+
+        if actual_num_frames_to_sample <= 0:
+            break
+
         frame_indices_to_sample = np.linspace(
-            sampling_start_frame, sampling_end_frame - 1, num_frames_to_sample, dtype=int
+            sampling_start_frame, sampling_end_frame - 1, actual_num_frames_to_sample, dtype=int
         )
         
         batch_frames_rgb = []
@@ -69,8 +75,9 @@ def process_video(
             else:
                 break
         
-        if len(batch_frames_rgb) < num_frames_to_sample:
-            break
+        if not batch_frames_rgb:
+            current_pos_frame += sliding_window_step_frames
+            continue
 
         try:
             # 추론 시작 시간 측정
