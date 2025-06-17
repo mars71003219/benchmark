@@ -38,9 +38,11 @@ app.add_middleware(
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
-RESULTS_DIR = BASE_DIR / "results"
+RESULTS_DIR = Path("/aivanas/raw/action/eval_results/temp_results")
+SAVE_RESULTS_DIR = Path("/aivanas/raw/action/eval_results/save_results")
 UPLOAD_DIR.mkdir(exist_ok=True)
-RESULTS_DIR.mkdir(exist_ok=True)
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+SAVE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 stop_infer_flag = False
 current_video_info = {}
@@ -331,7 +333,7 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
         current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
         # 모든 비디오 추론이 정상적으로 끝났을 때 결과 파일 이동 및 csv 저장
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        done_dir = BASE_DIR / 'save_results' / f'{timestamp}_done_success'
+        done_dir = SAVE_RESULTS_DIR / f'{timestamp}_done_success'
         done_dir.mkdir(parents=True, exist_ok=True)
         for f in RESULTS_DIR.glob("*"):
             shutil.move(str(f), str(done_dir / f.name))
@@ -449,7 +451,7 @@ async def stop_infer_endpoint():
     stop_infer_flag = True
     # 결과 파일 이동
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    save_dir = BASE_DIR / 'save_results' / timestamp
+    save_dir = SAVE_RESULTS_DIR / timestamp
     save_dir.mkdir(parents=True, exist_ok=True)
     for f in RESULTS_DIR.glob("*"):
         shutil.move(str(f), str(save_dir / f.name))

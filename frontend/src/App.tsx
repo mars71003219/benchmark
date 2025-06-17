@@ -79,6 +79,10 @@ function App() {
     const [cumulativeAccuracyHistory, setCumulativeAccuracyHistory] = useState<{ processed_clips: number; accuracy: number; }[]>([]);
     const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
     const [isPaused, setIsPaused] = useState(false);
+    const [isAnnotationVideoMismatch, setIsAnnotationVideoMismatch] = useState(false);
+    const [annotationAlertOpen, setAnnotationAlertOpen] = useState(false);
+    const [annotationSuccessOpen, setAnnotationSuccessOpen] = useState(false);
+    const [selectedResultFile, setSelectedResultFile] = useState<File | null>(null);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -164,6 +168,16 @@ function App() {
             });
         }
     }, []);
+
+    useEffect(() => {
+        if (Object.keys(annotationData).length > 0) {
+            const annotationVideoNames = Object.keys(annotationData).sort();
+            const uploadedVideoNames = uploadedFiles.map(f => f.name).sort();
+            const isSameLength = annotationVideoNames.length === uploadedVideoNames.length;
+            const isSameNames = annotationVideoNames.every((name, idx) => name === uploadedVideoNames[idx]);
+            setIsAnnotationVideoMismatch(!isSameLength || !isSameNames);
+        }
+    }, [uploadedFiles, annotationData]);
 
     if (!inferenceState) {
         return (
@@ -337,15 +351,38 @@ function App() {
                         parsedData = JSON.parse(text);
                     }
                     
+                    // === 업로드된 비디오와 비교 ===
+                    const annotationVideoNames = Object.keys(parsedData).sort();
+                    const uploadedVideoNames = uploadedFiles.map(f => f.name).sort();
+                    const isSameLength = annotationVideoNames.length === uploadedVideoNames.length;
+                    const isSameNames = annotationVideoNames.every((name, idx) => name === uploadedVideoNames[idx]);
+                    if (!isSameLength || !isSameNames) {
+                        setIsAnnotationVideoMismatch(true);
+                        setAnnotationAlertOpen(true);
+                        return;
+                    }
                     setAnnotationData(parsedData);
-                    alert('어노테이션 파일이 성공적으로 로드되었습니다.');
+                    setIsAnnotationVideoMismatch(false);
+                    setAnnotationAlertOpen(false);
+                    setAnnotationSuccessOpen(true);
                 } catch (error: any) {
                     console.error("어노테이션 파일 파싱 오류:", error);
                     alert(`어노테이션 파일 파싱에 실패했습니다: ${error.message}`);
                     setAnnotationData({});
+                } finally {
+                    e.target.value = '';
                 }
             };
             reader.readAsText(file);
+        } else {
+            e.target.value = '';
+        }
+    };
+
+    const handleResultFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedResultFile(file);
         }
     };
 
@@ -539,8 +576,11 @@ function App() {
                                     </Button>
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <Button variant="outlined" component="label" size="small" fullWidth sx={{ fontSize: '0.8rem' }}>
-                                       Annotation 
+                                    <Button 
+                                        variant={annotationData && Object.keys(annotationData).length > 0 ? "contained" : "outlined"}
+                                        color={annotationData && Object.keys(annotationData).length > 0 ? "primary" : "inherit"}
+                                        component="label" size="small" fullWidth sx={{ fontSize: '0.8rem' }}>
+                                        Annotation 
                                         <input type="file" hidden accept=".json,.txt" onChange={handleAnnotationUpload} />
                                     </Button>
                                 </Grid>
@@ -579,7 +619,13 @@ function App() {
                                     variant="contained"
                                     color="primary"
                                     onClick={handleStartInference}
-                                    disabled={!modelId || uploadedFiles.length === 0}
+                                    disabled={
+                                      !modelId ||
+                                      uploadedFiles.length === 0 ||
+                                      isAnnotationVideoMismatch ||
+                                      !annotationData || Object.keys(annotationData).length === 0 ||
+                                      (inferenceMode !== 'AR' && inferenceMode !== 'AL')
+                                    }
                                     fullWidth
                                     sx={{ mt: 0, mb: 1 }}
                                 >
@@ -675,16 +721,24 @@ function App() {
                                         minHeight: 0,
                                         p: 2
                                     }}>
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            justifyContent: 'center', 
-                                            alignItems: 'center', 
-                                            flexShrink: 0,
-                                            mb: 1
-                                        }}>
-                                            <Typography variant="subtitle1" color="white">
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0, mb: 1, position: 'relative' }}>
+                                            <Typography variant="subtitle1" color="white" sx={{ textAlign: 'center', width: '100%' }}>
                                                 추론 결과 분석
                                             </Typography>
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                component="label"
+                                                sx={{ position: 'absolute', right: 0 }}
+                                            >
+                                                Open videos
+                                                <input
+                                                    type="file"
+                                                    accept=".mp4"
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleResultFileChange}
+                                                />
+                                            </Button>
                                         </Box>
                                         <Box sx={{ 
                                             flex: 1, 
@@ -694,8 +748,8 @@ function App() {
                                             alignItems: 'center', 
                                             minHeight: 0
                                         }}>
-                                            {selectedVideo ? (
-                                                <VideoPlayer videoUrl={selectedVideoUrl} />
+                                            {selectedResultFile ? (
+                                                <VideoPlayer videoUrl={URL.createObjectURL(selectedResultFile)} />
                                             ) : (
                                                 <Box sx={{ 
                                                     display: 'flex', 
@@ -708,13 +762,9 @@ function App() {
                                                     <Typography variant="body2" sx={{ mb: 2 }}>
                                                         분석 비디오를 선택하세요
                                                     </Typography>
-                                                    <Button 
-                                                        variant="contained" 
-                                                        size="small" 
-                                                        onClick={handleOpenAnalysisVideoSelect}
-                                                    >
-                                                        추론 결과 영상 열기
-                                                    </Button>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                                                        ※ NAS(aivanas) save_results 폴더 내의 mp4 파일만 선택해 주세요.
+                                                    </Typography>
                                                 </Box>
                                             )}
                                         </Box>
@@ -759,24 +809,22 @@ function App() {
                         </Box>
                     </Grid>
                 </Grid>
-                <Dialog open={isAnalysisVideoSelectOpen} onClose={handleCloseAnalysisVideoSelect} maxWidth="sm" fullWidth>
-                    <DialogTitle>분석 비디오 선택</DialogTitle>
+                <Dialog open={annotationAlertOpen} onClose={() => setAnnotationAlertOpen(false)}>
+                    <DialogTitle>어노테이션/비디오 불일치</DialogTitle>
                     <DialogContent>
-                        {resultVideos.length === 0 ? (
-                            <Typography>분석된 비디오가 없습니다.</Typography>
-                        ) : (
-                            <List>
-                                {resultVideos.map((video, index) => (
-                                    <ListItem button key={index} onClick={() => handleSelectAnalysisVideo(video)} selected={selectedVideo === video}>
-                                        <ListItemText primary={video.substring(video.lastIndexOf('/') + 1)} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        )}
+                        <Typography>어노테이션 파일의 비디오 목록과 업로드된 비디오 목록이 일치하지 않습니다!</Typography>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleCloseAnalysisVideoSelect}>취소</Button>
-                        <Button onClick={() => handleSelectAnalysisVideo(selectedVideo)} color="primary" disabled={!selectedVideo}>재생</Button>
+                        <Button onClick={() => setAnnotationAlertOpen(false)}>확인</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog open={annotationSuccessOpen} onClose={() => setAnnotationSuccessOpen(false)}>
+                    <DialogTitle>어노테이션 성공</DialogTitle>
+                    <DialogContent>
+                        <Typography>어노테이션 파일이 성공적으로 로드되었습니다.</Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setAnnotationSuccessOpen(false)}>확인</Button>
                     </DialogActions>
                 </Dialog>
             </Container>
