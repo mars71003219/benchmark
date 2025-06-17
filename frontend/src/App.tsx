@@ -78,6 +78,7 @@ function App() {
     const [annotationData, setAnnotationData] = useState<AnnotationData>({});
     const [cumulativeAccuracyHistory, setCumulativeAccuracyHistory] = useState<{ processed_clips: number; accuracy: number; }[]>([]);
     const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
+    const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -247,6 +248,8 @@ function App() {
     };
 
     const handleStartInference = () => {
+        setCumulativeAccuracyHistory([]);
+        setMetricsHistory([]);
         fetch('http://localhost:10000/infer', {
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
@@ -260,8 +263,19 @@ function App() {
         });
     };
 
+    const handlePauseInference = () => {
+        fetch('http://localhost:10000/pause_infer', { method: 'POST' });
+        setIsPaused(true);
+    };
+
+    const handleResumeInference = () => {
+        fetch('http://localhost:10000/resume_infer', { method: 'POST' });
+        setIsPaused(false);
+    };
+
     const handleStopInference = () => {
         fetch('http://localhost:10000/stop_infer', { method: 'POST' });
+        setIsPaused(false);
     };
 
     const handleAnnotationUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -531,16 +545,47 @@ function App() {
                                     </Button>
                                 </Grid>
                             </Grid>
-                            <Button
-                                variant={isInferring ? 'contained' : 'contained'}
-                                onClick={isInferring ? handleStopInference : handleStartInference}
-                                disabled={!modelId || uploadedFiles.length === 0}
-                                color={isInferring ? 'error' : 'primary'}
-                                fullWidth
-                                sx={{ mt: 0, mb: 1 }}
-                            >
-                                {isInferring ? 'STOP' : 'RUN'}
-                            </Button>
+                            {isInferring && !isPaused ? (
+                                <Button
+                                    variant="contained"
+                                    color="warning"
+                                    onClick={handlePauseInference}
+                                    fullWidth
+                                    sx={{ mt: 0, mb: 1 }}
+                                >
+                                    PAUSE
+                                </Button>
+                            ) : isInferring && isPaused ? (
+                                <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        onClick={handleStopInference}
+                                        fullWidth
+                                    >
+                                        STOP
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={handleResumeInference}
+                                        fullWidth
+                                    >
+                                        RESUME
+                                    </Button>
+                                </Box>
+                            ) : (
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={handleStartInference}
+                                    disabled={!modelId || uploadedFiles.length === 0}
+                                    fullWidth
+                                    sx={{ mt: 0, mb: 1 }}
+                                >
+                                    RUN
+                                </Button>
+                            )}
                             <Box sx={{ mt: 0.5 }}>
                                 {classLabels.length > 0 && <Typography variant="caption" color="text.secondary">{classLabels.length}개 클래스</Typography>}
                                 {videoDuration > 0 && <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>비디오 길이: {videoDuration}초</Typography>}

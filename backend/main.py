@@ -18,6 +18,7 @@ import csv
 import psutil
 from pynvml import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import shutil
 
 from utils import (
     load_model, process_video, create_overlay_video,
@@ -56,6 +57,10 @@ global_fp = 0
 global_fn = 0
 global_total_processed_clips = 0
 global_correct_predictions = 0
+
+pause_infer_flag = False
+resume_infer_flag = False
+paused_video_name = None
 
 try:
     nvmlInit()
@@ -97,9 +102,17 @@ def reset_inference_state():
 def stop_checker():
     return stop_infer_flag
 
-# [수정] 이 함수는 이제 동기적으로 실행됨 (run_in_executor에서 호출되므로)
+def remove_video_results_from_csv(csv_path, video_name):
+    if not csv_path.exists():
+        return
+    import pandas as pd
+    df = pd.read_csv(csv_path)
+    df = df[df['video_name'] != video_name]
+    df.to_csv(csv_path, index=False)
+
 def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict):
     global global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
+    global pause_infer_flag, resume_infer_flag, paused_video_name
     reset_inference_state() # This will also reset global counters
     current_video_info["is_inferencing"] = True # Set to true initially
     try:
@@ -112,10 +125,28 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
         try: inference_state_queue.put_nowait(current_video_info.copy())
         except asyncio.QueueFull: pass
         
-        # final_results = []  # 최종 결과를 저장할 리스트
+        final_results = []  # 최종 결과를 저장할 리스트
         overlay_tasks = []  # 오버레이 비디오 생성 작업을 저장할 리스트
 
+        resume_from_video = None
+        if resume_infer_flag and paused_video_name:
+            resume_from_video = paused_video_name
+            resume_infer_flag = False
         for i, video_path in enumerate(video_files):
+            # RESUME: 중단된 비디오부터 시작
+            if resume_from_video:
+                if video_path.name != resume_from_video:
+                    continue
+                else:
+                    resume_from_video = None
+                    # results.csv에서 해당 비디오 결과 삭제
+                    csv_path = save_dir / "results.csv"
+                    remove_video_results_from_csv(csv_path, video_path.name)
+            # PAUSE 체크
+            while pause_infer_flag:
+                paused_video_name = video_path.name
+                import time
+                time.sleep(0.5)
             if stop_checker():
                 current_video_info["events"].append({"type": "stop", "timestamp": datetime.now().isoformat()})
                 break
@@ -153,12 +184,20 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                 except asyncio.QueueFull:
                     pass # Drop frame if consumer is not ready
 
+            def pause_or_stop_checker():
+                global pause_infer_flag, paused_video_name, stop_infer_flag, current_video_info
+                while pause_infer_flag:
+                    paused_video_name = current_video_info.get("current_video")
+                    import time
+                    time.sleep(0.5)
+                return stop_infer_flag
+
             try:
                 process_video(
                     video_path=video_path, model=model, feature_extractor=feature_extractor,
                     sampling_window_frames=interval, sliding_window_step_frames=infer_period,
                     num_frames_to_sample=batch, progress_callback=progress_callback,
-                    result_callback=result_callback, stop_checker=stop_checker,
+                    result_callback=result_callback, stop_checker=pause_or_stop_checker,
                     frame_callback=frame_callback,
                 )
 
@@ -189,11 +228,25 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                     
                     if final_label_for_video:
                         # 최종 결과 저장
+                        anno_label = None
+                        if "AR" in video_annotations_for_current_video:
+                            anno_label = video_annotations_for_current_video["AR"].get("label")
+                        # metrics 계산
+                        metrics_val = None
+                        if anno_label:
+                            if anno_label == "Fight":
+                                if final_label_for_video == "Fight": metrics_val = "TP"
+                                else: metrics_val = "FP"
+                            elif anno_label == "NonFight":
+                                if final_label_for_video == "NonFight": metrics_val = "TN"
+                                else: metrics_val = "FN"
                         final_result = {
                             "video_name": video_path.name,
-                            "final_label": final_label_for_video
+                            "final_pred_label": final_label_for_video,
+                            "anno_label": anno_label,
+                            "metrics": metrics_val
                         }
-                        # final_results.append(final_result)
+                        final_results.append(final_result)
                         
                         # Ground truth와 비교하여 메트릭 업데이트
                         if "AR" in video_annotations_for_current_video:
@@ -244,7 +297,7 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
             # 최종 결과를 CSV 파일로 저장
             if final_result:
                 csv_path = save_dir / "final_results.csv"
-                field_names = ['video_name', 'final_label']
+                field_names = ['video_name', 'final_pred_label', 'anno_label', 'metrics']
 
                 # 1. 파일 존재 여부를 미리 확인한다.
                 file_exists = csv_path.is_file()
@@ -276,6 +329,23 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                             print(f"오버레이 비디오 생성 중 에러 발생: {e}")
         
         current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
+        # 모든 비디오 추론이 정상적으로 끝났을 때 결과 파일 이동 및 csv 저장
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        done_dir = BASE_DIR / 'save_results' / f'{timestamp}_done_success'
+        done_dir.mkdir(parents=True, exist_ok=True)
+        for f in RESULTS_DIR.glob("*"):
+            shutil.move(str(f), str(done_dir / f.name))
+        # 최종 결과 csv 저장
+        if final_results:
+            import pandas as pd
+            df = pd.DataFrame(final_results)
+            df.to_csv(done_dir / 'final_results.csv', index=False)
+        # 전체 metrics csv 저장
+        metrics_row = current_video_info.get("metrics", {})
+        if metrics_row:
+            import pandas as pd
+            df_metrics = pd.DataFrame([metrics_row])
+            df_metrics.to_csv(done_dir / 'model_evaluation_metrics.csv', index=False)
     finally:
         current_video_info["is_inferencing"] = False # Ensure this is always set to False
         try: inference_state_queue.put_nowait(current_video_info.copy()) # Final state update
@@ -377,7 +447,13 @@ async def websocket_endpoint(websocket: WebSocket):
 async def stop_infer_endpoint():
     global stop_infer_flag
     stop_infer_flag = True
-    return {"message": "추론 중지 요청"}
+    # 결과 파일 이동
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    save_dir = BASE_DIR / 'save_results' / timestamp
+    save_dir.mkdir(parents=True, exist_ok=True)
+    for f in RESULTS_DIR.glob("*"):
+        shutil.move(str(f), str(save_dir / f.name))
+    return {"message": "추론 중지 및 결과 이동 완료"}
 
 @app.delete("/upload/{filename}")
 async def delete_file_endpoint(filename: str):
@@ -536,6 +612,19 @@ async def websocket_realtime_overlay_endpoint(websocket: WebSocket):
         print(f"실시간 오버레이 WebSocket 오류: {e}")
     finally:
         print("실시간 오버레이 WebSocket 연결 종료.")
+
+@app.post("/pause_infer")
+async def pause_infer_endpoint():
+    global pause_infer_flag
+    pause_infer_flag = True
+    return {"message": "추론 일시정지"}
+
+@app.post("/resume_infer")
+async def resume_infer_endpoint():
+    global pause_infer_flag, resume_infer_flag
+    pause_infer_flag = False
+    resume_infer_flag = True
+    return {"message": "추론 재개"}
 
 if __name__ == "__main__":
     import uvicorn

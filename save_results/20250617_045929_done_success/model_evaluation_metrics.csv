@@ -1,0 +1,2 @@
+tp,tn,fp,fn,precision,recall,f1_score
+2,0,0,0,1.0,1.0,1.0
