@@ -5,7 +5,7 @@ import {
     Container, Box, Typography, Paper, ThemeProvider, createTheme, CssBaseline, Button,
     TextField, Grid, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton,
     Stack, CircularProgress, LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions,
-    FormControl, InputLabel, Select, MenuItem
+    FormControl, InputLabel, Select, MenuItem, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -26,6 +26,7 @@ import CumulativeAccuracyGraph from './components/CumulativeAccuracyGraph';
 import MetricsBarChart from './components/MetricsBarChart';
 import VideoPlayer from './components/VideoPlayer';
 import EventLog from './components/EventLog';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const theme = createTheme({
     palette: {
@@ -112,6 +113,8 @@ function App() {
 
     // 1. 복사 진행률 UI 표시 상태 관리
     const [showNasProgress, setShowNasProgress] = useState(false);
+
+    const [minConsecutive, setMinConsecutive] = useState(3);
 
     useEffect(() => {
         // 1. 현재 로드된 모델 정보
@@ -423,7 +426,8 @@ function App() {
             infer_period: inferPeriod,
             batch: batchFrames,
             inference_mode: inferenceMode,
-            annotation_data: annotationData
+            annotation_data: annotationData,
+            min_consecutive: minConsecutive
         };
         fetch('/infer', {
             method: 'POST', 
@@ -828,6 +832,22 @@ function App() {
                                     />
                                 </Grid>
                             </Grid>
+                            <Accordion sx={{ mb: 1 }}>
+                                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                    <Typography>고급 설정</Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <TextField
+                                        label="연속적 추론 최소값"
+                                        type="number"
+                                        value={minConsecutive}
+                                        onChange={e => setMinConsecutive(Number(e.target.value))}
+                                        size="small"
+                                        fullWidth
+                                        helperText="최종 라벨로 인정받기 위한 연속된 동일 라벨의 최소 개수"
+                                    />
+                                </AccordionDetails>
+                            </Accordion>
                             <Grid container spacing={1} sx={{ mb: 1 }}>
                                 <Grid item xs={4}>
                                     <Button 
@@ -901,7 +921,7 @@ function App() {
                                       (inferenceMode !== 'AR' && inferenceMode !== 'AL')
                                     }
                                     fullWidth
-                                    sx={{ mt: 0, mb: 1 }}
+                                    sx={{ mt: 0, mb: 0 }}
                                 >
                                     RUN
                                 </Button>
@@ -909,15 +929,6 @@ function App() {
                             <Box sx={{ mt: 0.5 }}>
                                 {classLabels.length > 0 && <Typography variant="caption" color="text.secondary">{classLabels.length}개 클래스</Typography>}
                                 {videoDuration > 0 && <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>비디오 길이: {videoDuration}초</Typography>}
-                            </Box>
-                            <Box sx={{ mt: 0.5 }}>
-                                <ProgressDisplay
-                                    isInferencing={inferenceState.is_inferencing}
-                                    currentVideo={inferenceState.current_video}
-                                    currentProgress={inferenceState.current_progress}
-                                    totalVideos={inferenceState.total_videos}
-                                    processedVideos={inferenceState.processed_videos}
-                                />
                             </Box>
                         </Paper>
                         <SystemInfo sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 0, overflowY: 'auto'}} />
@@ -1053,12 +1064,23 @@ function App() {
                                 <Grid container spacing={2} sx={{ flexGrow: 1, height: '100%' }}>
                                     {/* 1. 혼동 행렬 그래프 (왼쪽 절반) */}
                                     <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%', alignItems: 'center' }}>
-                                        <Box sx={{ mt: 7 }}>
+                                        {/* 진행바를 혼동행렬 위로 이동 */}
+                                        <Box sx={{ width: '100%', mb: 2 }}>
+                                            <ProgressDisplay
+                                                isInferencing={inferenceState.is_inferencing}
+                                                currentVideo={inferenceState.current_video}
+                                                currentProgress={inferenceState.current_progress}
+                                                totalVideos={inferenceState.total_videos}
+                                                processedVideos={inferenceState.processed_videos}
+                                            />
+                                        </Box>
+                                        {/* Current Inferencing Video 및 텍스트 삭제 */}
+                                        {/* <Box sx={{ mt: 7 }}>
                                             <Typography variant="subtitle2" gutterBottom sx={{ mb: 4, fontSize: '1.2em', width: '90%', textAlign: 'center', whiteSpace: 'nowrap' }}>Current Inferencing Video</Typography>
                                             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
                                                 {inferenceState.current_video ? inferenceState.current_video : '추론 중인 비디오 없음'}
                                             </Typography>
-                                        </Box>
+                                        </Box> */}
                                         <ConfusionMatrixDisplay metrics={metricsHistory.length > 0 ? metricsHistory[metricsHistory.length - 1] : { tp: 0, tn: 0, fp: 0, fn: 0, precision: 0, recall: 0, f1_score: 0 }} />
                                     </Grid>
 

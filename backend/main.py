@@ -231,7 +231,7 @@ def remove_video_results_from_csv(csv_path, video_name):
     df = df[df['video_name'] != video_name]
     df.to_csv(csv_path, index=False)
 
-def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict):
+def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict, min_consecutive: int = 3):
     global global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
     global pause_infer_flag, resume_infer_flag, paused_video_name
     reset_inference_state() # This will also reset global counters
@@ -338,13 +338,31 @@ def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_m
                     
                     final_label_for_video = None
                     if all_are_non:
-                        # 모든 라벨이 Non으로 시작하면 첫 번째 Non 라벨을 선택
                         final_label_for_video = all_labels[0]
                     else:
-                        # Non이 아닌 라벨이 하나라도 있으면, 가장 많이 나오는 이벤트 라벨을 선택
-                        from collections import Counter
+                        # Non이 아닌 라벨이 하나라도 있으면, 연속성 기준 우선 적용
                         event_labels = [label for label in all_labels if not label.lower().startswith("non")]
-                        if event_labels:
+                        def find_consecutive_label(labels, min_count):
+                            if not labels:
+                                return None
+                            prev = None
+                            count = 0
+                            for label in labels:
+                                if label == prev:
+                                    count += 1
+                                else:
+                                    prev = label
+                                    count = 1
+                                if count >= min_count:
+                                    return label
+                            return None
+                        # 연속성 기준 우선 적용
+                        consecutive_label = find_consecutive_label(all_labels, min_consecutive)
+                        if consecutive_label and not consecutive_label.lower().startswith("non"):
+                            final_label_for_video = consecutive_label
+                        elif event_labels:
+                            # 연속성 기준을 만족하는 라벨이 없으면 기존 다수결
+                            from collections import Counter
                             final_label_for_video = Counter(event_labels).most_common(1)[0][0]
                     
                     if final_label_for_video:
@@ -485,12 +503,10 @@ async def start_inference_endpoint(request: Request):
     batch = data.get("batch", 16)
     inference_mode = data.get("inference_mode", "default") # 'AR' or 'AL'
     annotation_data = data.get("annotation_data", {}) # Annotation data from frontend
+    min_consecutive = data.get("min_consecutive", 3) # 연속적 추론 최소값
     
-    # [핵심 수정] 이벤트 루프를 막지 않기 위해 별도 스레드에서 동기 함수 실행
     loop = asyncio.get_event_loop()
-    # functools.partial을 사용해 함수에 인자 전달
-    func = functools.partial(process_all_videos_sync, interval, infer_period, batch, RESULTS_DIR, inference_mode, annotation_data)
-    # 별도 스레드에서 작업 실행
+    func = functools.partial(process_all_videos_sync, interval, infer_period, batch, RESULTS_DIR, inference_mode, annotation_data, min_consecutive)
     await loop.run_in_executor(None, func)
     
     return {"message": "추론이 백그라운드에서 시작되었습니다."}
@@ -877,5 +893,5 @@ async def get_nas_paths_endpoint():
 if __name__ == "__main__":
     import uvicorn
     reset_inference_state()
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+    uvicorn.run(app, host="0.0.0.0", port=10000, log_level="warning")
 
