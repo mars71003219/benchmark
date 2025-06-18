@@ -53,6 +53,14 @@ interface AnnotationData {
     [videoName: string]: VideoAnnotation;
 }
 
+interface NasCopyProgress {
+    is_copying: boolean;
+    total_files: number;
+    copied_files: number;
+    current_file: string | null;
+    errors: string[];
+}
+
 function App() {
     const [modelId, setModelId] = useState('');
     const [modelStatus, setModelStatus] = useState<'none' | 'loading' | 'loaded'>('none');
@@ -83,8 +91,54 @@ function App() {
     const [annotationAlertOpen, setAnnotationAlertOpen] = useState(false);
     const [annotationSuccessOpen, setAnnotationSuccessOpen] = useState(false);
     const [selectedResultFile, setSelectedResultFile] = useState<File | null>(null);
+    
+    // NAS 폴더 복사 관련 상태
+    const [nasCopyProgress, setNasCopyProgress] = useState<NasCopyProgress>({
+        is_copying: false,
+        total_files: 0,
+        copied_files: 0,
+        current_file: null,
+        errors: []
+    });
+    const [nasCopyProgressOpen, setNasCopyProgressOpen] = useState(false);
+    
+    // NAS 경로 설정 (백엔드에서 가져옴)
+    const [nasBasePath, setNasBasePath] = useState('/home/hsnam');
+    const [nasTargetPath, setNasTargetPath] = useState('/aivanas');
+
+    // 1. 상태 추가
+    const [nasInputOpen, setNasInputOpen] = useState(false);
+    const [nasInputValue, setNasInputValue] = useState('');
+
+    // 1. 복사 진행률 UI 표시 상태 관리
+    const [showNasProgress, setShowNasProgress] = useState(false);
 
     useEffect(() => {
+        // 1. 현재 로드된 모델 정보
+        fetch('/current_model')
+            .then(res => res.json())
+            .then(data => {
+                if (data.model_id) {
+                    setModelId(data.model_id);
+                    setModelStatus('loaded');
+                } else {
+                    setModelId('');
+                    setModelStatus('none');
+                }
+            })
+            .catch(() => {});
+        
+        // 2. 현재 추론 상태 정보
+        fetch('/current_inference_state')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.is_inferencing) {
+                    setIsInferring(true);
+                }
+            })
+            .catch(() => {});
+        
+        // 3. 현재 업로드된 파일 목록 새로고침
         const fetchFiles = async () => {
             try {
                 const res = await fetch('/uploads');
@@ -92,8 +146,10 @@ function App() {
                 const data = await res.json();
                 if (Array.isArray(data.files)) {
                     setUploadedFiles(data.files);
-                    if (data.files.length > 0) {
+                    if (data.files.length > 0 && data.files[0] && data.files[0].name) {
                         setSelectedUploadedFileName(data.files[0].name);
+                    } else {
+                        setSelectedUploadedFileName('');
                     }
                 }
             } catch (error) {
@@ -101,13 +157,41 @@ function App() {
             }
         };
         fetchFiles();
+        
+        // 4. NAS 복사 진행 상태 확인
+        fetch('/nas_copy_progress')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.is_copying) {
+                    setNasCopyProgress(data);
+                    setNasCopyProgressOpen(true);
+                }
+            })
+            .catch(() => {});
+        
+        // 5. NAS 경로 설정 가져오기
+        fetch('/nas_paths')
+            .then(res => res.json())
+            .then(data => {
+                setNasBasePath(data.base_path);
+                setNasTargetPath(data.target_path);
+                console.log(`NAS 경로 설정: ${data.base_path} -> ${data.target_path}`);
+            })
+            .catch(() => {
+                console.log('NAS 경로 설정을 가져올 수 없어 기본값을 사용합니다.');
+            });
     }, []);
 
     useEffect(() => {
         if (uploadedFiles.length === 0) {
             setSelectedUploadedFileName('');
-        } else if (!selectedUploadedFileName || !uploadedFiles.some(f => f.name === selectedUploadedFileName)) {
-            setSelectedUploadedFileName(uploadedFiles[0].name);
+        } else if (!selectedUploadedFileName || !uploadedFiles.some(f => f && f.name === selectedUploadedFileName)) {
+            const validFiles = uploadedFiles.filter(f => f && f.name);
+            if (validFiles.length > 0) {
+                setSelectedUploadedFileName(validFiles[0].name);
+            } else {
+                setSelectedUploadedFileName('');
+            }
         }
     }, [uploadedFiles, selectedUploadedFileName]);
 
@@ -172,12 +256,47 @@ function App() {
     useEffect(() => {
         if (Object.keys(annotationData).length > 0) {
             const annotationVideoNames = Object.keys(annotationData).sort();
-            const uploadedVideoNames = uploadedFiles.map(f => f.name).sort();
+            const uploadedVideoNames = uploadedFiles.filter(f => f && f.name).map(f => f.name).sort();
             const isSameLength = annotationVideoNames.length === uploadedVideoNames.length;
             const isSameNames = annotationVideoNames.every((name, idx) => name === uploadedVideoNames[idx]);
             setIsAnnotationVideoMismatch(!isSameLength || !isSameNames);
         }
     }, [uploadedFiles, annotationData]);
+
+    // NAS 폴더 복사 진행 상태 폴링
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (showNasProgress) {
+            interval = setInterval(async () => {
+                try {
+                    const response = await fetch('/nas_copy_progress');
+                    if (response.ok) {
+                        const progress = await response.json();
+                        setNasCopyProgress(progress);
+                        // 복사가 완료되면 파일 목록 새로고침 및 진행률/입력창 UI 숨김
+                        if (!progress.is_copying && progress.copied_files >= progress.total_files && progress.total_files > 0) {
+                            const filesResponse = await fetch('/uploads');
+                            if (filesResponse.ok) {
+                                const data = await filesResponse.json();
+                                if (Array.isArray(data.files)) {
+                                    setUploadedFiles(data.files);
+                                }
+                            }
+                            setShowNasProgress(false);
+                            setNasInputOpen(false);
+                        }
+                    }
+                } catch (error) {
+                    console.error('NAS 복사 진행 상태 조회 실패:', error);
+                }
+            }, 1000);
+        }
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [showNasProgress]);
 
     if (!inferenceState) {
         return (
@@ -212,37 +331,58 @@ function App() {
         let files = e.target.files;
         if (!files || files.length === 0) return;
 
+        // 업로드 시작 전 이미 업로드된 파일명 Set으로 저장
+        let alreadyUploadedNames = new Set<string>();
+        try {
+            const res = await fetch('/uploads');
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.files)) {
+                    data.files.forEach((f: UploadedFile) => {
+                        if (f && f.name) alreadyUploadedNames.add(f.name);
+                    });
+                }
+            }
+        } catch {}
+
         // Filter only video files (mp4, avi, mkv)
         const allowedExtensions = [".mp4", ".avi", ".mkv"];
-        const filteredFiles = Array.from(files).filter(file => {
-            const lower = file.name.toLowerCase();
-            return allowedExtensions.some(ext => lower.endsWith(ext));
-        });
+        // 중복 파일명은 업로드 시도 자체를 하지 않음
+        const filteredFiles = Array.from(files).filter(file => file && file.name && allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext)) && !alreadyUploadedNames.has(file.name));
         if (filteredFiles.length === 0) {
-            alert("폴더 내에 mp4, avi, mkv 파일이 없습니다.");
+            alert("업로드할 새로운 mp4, avi, mkv 파일이 없습니다.");
             e.target.value = '';
             return;
         }
 
-        setTotalFilesToUpload(filteredFiles.length);
-        setUploadedFileCount(0);
+        // 전체 파일 수 = 이미 업로드된 + 실제 새로 업로드할 파일
+        setTotalFilesToUpload(alreadyUploadedNames.size + filteredFiles.length);
+        let uploadedCount = alreadyUploadedNames.size;
+        setUploadedFileCount(uploadedCount);
         setCurrentUploadSessionFiles([]);
 
         for (let i = 0; i < filteredFiles.length; i++) {
             const file = filteredFiles[i];
+            if (!file || !file.name) continue;
             const formData = new FormData();
             formData.append('files', file);
             formData.append('paths', file.webkitRelativePath || file.name);
             try {
                 const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
-                if (!uploadRes.ok) throw new Error(`파일 업로드 실패: ${file.name}`);
+                if (!uploadRes.ok) throw new Error(`파일 업로드 실패: ${file && file.name}`);
                 const data = await uploadRes.json();
                 setUploadedFiles(prev => {
-                    const newFiles = [...prev, ...data.files];
-                    return newFiles.filter((v, idx, a) => a.findIndex(t => (t.name === v.name)) === idx);
+                    const newFiles = [...prev, ...(Array.isArray(data.files) ? data.files.filter((f: UploadedFile) => f && f.name) : [])];
+                    return newFiles.filter((v, idx, a) => v && v.name && a.findIndex(t => t && t.name === v.name) === idx);
                 });
-                setUploadedFileCount(prev => prev + 1);
-                setCurrentUploadSessionFiles(prev => [...prev, data.files[0].name]);
+                // 실제 업로드된 파일만 카운트
+                if (Array.isArray(data.files) && data.files.length > 0) {
+                    uploadedCount += data.files.length;
+                }
+                setUploadedFileCount(uploadedCount);
+                if (Array.isArray(data.files) && data.files[0] && data.files[0].name) {
+                    setCurrentUploadSessionFiles(prev => [...prev, data.files[0].name]);
+                }
             } catch (error) {
                 console.error(error);
                 alert(error);
@@ -256,7 +396,7 @@ function App() {
     const handleRemoveFile = async (fileName: string) => {
         const res = await fetch(`/upload/${encodeURIComponent(fileName)}`, { method: 'DELETE' });
         if (res.ok) {
-        setUploadedFiles(prev => prev.filter(f => f.name !== fileName));
+        setUploadedFiles(prev => prev.filter((f: UploadedFile) => f && f.name && f.name !== fileName));
         if (selectedUploadedFileName === fileName) {
             setSelectedUploadedFileName('');
             }
@@ -368,7 +508,7 @@ function App() {
                     
                     // === 업로드된 비디오와 비교 ===
                     const annotationVideoNames = Object.keys(parsedData).sort();
-                    const uploadedVideoNames = uploadedFiles.map(f => f.name).sort();
+                    const uploadedVideoNames = uploadedFiles.filter(f => f && f.name).map(f => f.name).sort();
                     const isSameLength = annotationVideoNames.length === uploadedVideoNames.length;
                     const isSameNames = annotationVideoNames.every((name, idx) => name === uploadedVideoNames[idx]);
                     if (!isSameLength || !isSameNames) {
@@ -445,6 +585,95 @@ function App() {
 
     const selectedVideoUrl = selectedVideo ? `http://localhost:10000/video/${selectedVideo.replace('_overlay.mp4', '')}/overlay` : '';
 
+    // 모델 해제 핸들러
+    const handleUnloadModel = async () => {
+        try {
+            const res = await fetch('/unload_model', { method: 'POST' });
+            if (!res.ok) throw new Error('모델 해제 실패');
+            setModelId('');
+            setModelStatus('none');
+        } catch (e) {
+            alert('모델 해제 실패');
+        }
+    };
+
+    // 2. NAS 폴더 버튼 클릭 시 입력창 토글
+    const handleNasFolderSelect = () => {
+        setNasInputOpen((prev) => !prev);
+    };
+
+    // 3. NAS 폴더 업로드 버튼 클릭 시
+    const handleNasFolderUpload = async () => {
+        const trimmedPath = nasInputValue.trim();
+        if (!trimmedPath) {
+            alert('경로를 입력하세요.');
+            return;
+        }
+        if (!(trimmedPath.startsWith(nasTargetPath) || trimmedPath.startsWith('./') || trimmedPath.startsWith('../') || !trimmedPath.startsWith('/'))) {
+            alert(`경로 형식이 올바르지 않습니다. 절대 경로(${nasTargetPath}) 또는 상대 경로(./, ../)를 사용하세요.`);
+            return;
+        }
+        setShowNasProgress(true);
+        setNasInputOpen(true);
+        await processNasFolder(trimmedPath);
+    };
+
+    const processNasFolder = async (folderPath: string) => {
+        try {
+            // 백엔드로 폴더 경로 전송
+            const response = await fetch('/process_nas_folder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nas_folder: folderPath
+                }),
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                setNasCopyProgress({
+                    is_copying: true,
+                    total_files: result.total_files,
+                    copied_files: result.copied_files,
+                    current_file: null,
+                    errors: result.errors
+                });
+                setNasCopyProgressOpen(true);
+                
+                if (result.errors && result.errors.length > 0) {
+                    alert(`복사 중 오류가 발생했습니다:\n${result.errors.join('\n')}`);
+                }
+            } else {
+                const error = await response.json();
+                alert(`NAS 폴더 처리 실패: ${error.detail || '알 수 없는 오류'}`);
+            }
+        } catch (error) {
+            console.error('NAS 폴더 처리 실패:', error);
+            alert('NAS 폴더 처리 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleCancelNasCopy = async () => {
+        try {
+            const response = await fetch('/cancel_nas_copy', {
+                method: 'POST',
+            });
+            if (response.ok) {
+                setNasCopyProgress(prev => ({ ...prev, is_copying: false }));
+                setNasCopyProgressOpen(false);
+                // 업로드된 파일도 모두 삭제
+                await fetch('/uploads', { method: 'DELETE' });
+                setUploadedFiles([]);
+                setShowNasProgress(false);
+                setNasInputOpen(false);
+            }
+        } catch (error) {
+            console.error('NAS 복사 취소 실패:', error);
+        }
+    };
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -457,8 +686,7 @@ function App() {
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', flexGrow: 1, flexShrink: 0, overflowY: 'auto', mb: 1 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Video Upload</Typography>
-                                <Box>
-                                </Box>
+                                <Box></Box>
                             </Box>
                             {totalFilesToUpload > 0 ? (
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -475,9 +703,40 @@ function App() {
                             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                                 <Button variant="outlined" component="label" startIcon={<FolderOpenIcon />} size="small" sx={{ flex: 1 }}>파일 열기<input type="file" hidden multiple onChange={handleFileUpload} /></Button>
                                 <Button variant="outlined" component="label" startIcon={<FolderOpenIcon />} size="small" sx={{ flex: 1 }}>폴더 열기<input type="file" hidden multiple webkitdirectory="" onChange={handleFileUpload} /></Button>
+                                <Button variant="outlined" startIcon={<FolderOpenIcon />} size="small" sx={{ flex: 1 }} onClick={handleNasFolderSelect}>NAS 폴더</Button>
                                 <Button variant="text" color="error" size="small" onClick={handleRemoveAllFiles}>전체 삭제</Button>
                             </Box>
-                            
+                            {nasInputOpen && (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2, alignItems: 'stretch' }}>
+                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                        <TextField
+                                            label="NAS 폴더 경로"
+                                            value={nasInputValue}
+                                            onChange={e => setNasInputValue(e.target.value)}
+                                            size="small"
+                                            fullWidth
+                                        />
+                                        <Button variant="contained" color="primary" onClick={handleNasFolderUpload}>Upload</Button>
+                                    </Box>
+                                    {showNasProgress && (
+                                        <Box sx={{ width: '100%', mt: 1 }}>
+                                            <LinearProgress
+                                                variant="determinate"
+                                                value={nasCopyProgress.total_files > 0 ? (nasCopyProgress.copied_files / nasCopyProgress.total_files) * 100 : 0}
+                                                sx={{ height: 10, borderRadius: 5 }}
+                                            />
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                                                <Typography variant="body2">
+                                                    복사 진행률: {nasCopyProgress.copied_files} / {nasCopyProgress.total_files}
+                                                </Typography>
+                                                <Button variant="outlined" color="error" size="small" onClick={handleCancelNasCopy} sx={{ ml: 2 }}>
+                                                    복사 취소
+                                                </Button>
+                                            </Box>
+                                        </Box>
+                                    )}
+                                </Box>
+                            )}
                             <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                                 <InputLabel id="uploaded-video-select-label">업로드된 비디오</InputLabel>
                                 <Select
@@ -494,7 +753,7 @@ function App() {
                                         },
                                     }}
                                 >
-                                    {uploadedFiles.map((f) => (
+                                    {uploadedFiles.filter((f: UploadedFile) => f && f.name).map((f: UploadedFile) => (
                                         <MenuItem key={f.name} value={f.name}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                                                 <Typography

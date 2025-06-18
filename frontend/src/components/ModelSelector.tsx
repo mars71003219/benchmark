@@ -10,9 +10,11 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 
 interface ModelSelectorProps {
   onSubmit: (url: string) => void;
+  onUnload?: () => void;
+  isModelLoaded?: boolean;
 }
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ onSubmit }) => {
+const ModelSelector: React.FC<ModelSelectorProps> = ({ onSubmit, onUnload, isModelLoaded }) => {
   const [modelId, setModelId] = useState('');
   const [error, setError] = useState('');
 
@@ -65,6 +67,17 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onSubmit }) => {
         >
           모델 로드
         </Button>
+        {isModelLoaded && onUnload && (
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            sx={{ minWidth: 100 }}
+            onClick={onUnload}
+          >
+            모델 해제
+          </Button>
+        )}
       </Box>
     </Box>
   );

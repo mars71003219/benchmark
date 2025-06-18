@@ -1506,3 +1506,19 @@ webpack compiled successfully
 Files successfully emitted, waiting for typecheck results...
 Issues checking in progress...
 No issues found.
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+The build failed because the process exited too early. This probably means the system ran out of memory or someone called `kill -9` on the process.

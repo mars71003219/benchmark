@@ -66,6 +66,22 @@ pause_infer_flag = False
 resume_infer_flag = False
 paused_video_name = None
 
+# NAS 폴더 복사 진행 상태 추적
+nas_copy_progress = {
+    "is_copying": False,
+    "total_files": 0,
+    "copied_files": 0,
+    "current_file": None,
+    "errors": []
+}
+
+# NAS 경로 설정
+# 환경변수에서 읽어오거나 기본값 사용
+NAS_BASE_PATH = os.getenv('NAS_BASE_PATH', '/home/hsnam')
+NAS_TARGET_PATH = os.getenv('NAS_TARGET_PATH', '/aivanas')
+
+print(f"NAS 경로 설정: {NAS_BASE_PATH} -> {NAS_TARGET_PATH}")
+
 try:
     nvmlInit()
 except NVMLError: pass
@@ -122,6 +138,87 @@ def reset_inference_state():
     # Also push initial state to queue
     try: inference_state_queue.put_nowait(current_video_info.copy())
     except asyncio.QueueFull: pass
+
+def reset_nas_copy_progress():
+    global nas_copy_progress
+    nas_copy_progress = {
+        "is_copying": False,
+        "total_files": 0,
+        "copied_files": 0,
+        "current_file": None,
+        "errors": []
+    }
+
+def copy_nas_folder_sync(nas_folder_path: str):
+    """NAS 폴더의 모든 비디오 파일을 uploads로 복사하는 동기 함수 (이미 있는 파일은 건너뜀)"""
+    global nas_copy_progress
+    reset_nas_copy_progress()
+    nas_copy_progress["is_copying"] = True
+    skipped_files = []
+    try:
+        # 경로 정규화
+        nas_path = Path(nas_folder_path).resolve()
+        # print(f"정규화된 경로: {nas_path}")
+        # 경로가 존재하는지 확인
+        if not nas_path.exists():
+            nas_copy_progress["errors"].append(f"경로가 존재하지 않습니다: {nas_folder_path}")
+            return
+        # 경로가 디렉토리인지 확인
+        if not nas_path.is_dir():
+            nas_copy_progress["errors"].append(f"지정된 경로가 디렉토리가 아닙니다: {nas_folder_path}")
+            return
+        video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm'}
+        video_files = []
+        for ext in video_extensions:
+            video_files.extend(nas_path.rglob(f"*{ext}"))
+            video_files.extend(nas_path.rglob(f"*{ext.upper()}"))
+        video_files = list(set(video_files))
+        video_files.sort()
+        nas_copy_progress["total_files"] = len(video_files)
+        if nas_copy_progress["total_files"] == 0:
+            nas_copy_progress["errors"].append("선택된 폴더에서 비디오 파일을 찾을 수 없습니다.")
+            return
+        # print(f"NAS 폴더에서 {nas_copy_progress['total_files']}개의 비디오 파일을 찾았습니다.")
+        for i, video_file in enumerate(video_files):
+            if not nas_copy_progress["is_copying"]:
+                # print("NAS 폴더 복사가 취소되었습니다.")
+                break
+            try:
+                nas_copy_progress["current_file"] = str(video_file)
+                target_filename = video_file.name
+                target_path = UPLOAD_DIR / target_filename
+                counter = 1
+                original_target_path = target_path
+                while target_path.exists():
+                    name_without_ext = original_target_path.stem
+                    ext = original_target_path.suffix
+                    target_filename = f"{name_without_ext}_{counter}{ext}"
+                    target_path = UPLOAD_DIR / target_filename
+                    counter += 1
+                if target_path.exists():
+                    skipped_files.append(str(target_path.name))
+                    # print(f"이미 존재하여 건너뜀: {target_path.name}")
+                    nas_copy_progress["copied_files"] += 1
+                    continue
+                shutil.copy2(video_file, target_path)
+                nas_copy_progress["copied_files"] += 1
+                # print(f"복사 완료: {video_file.name} -> {target_filename} ({i+1}/{nas_copy_progress['total_files']})")
+            except Exception as e:
+                error_msg = f"파일 복사 실패 ({video_file.name}): {str(e)}"
+                nas_copy_progress["errors"].append(error_msg)
+                # print(error_msg)
+        if skipped_files:
+            nas_copy_progress["errors"].append(f"이미 존재하여 건너뛴 파일: {', '.join(skipped_files)}")
+        # if nas_copy_progress["is_copying"]:
+        #     print(f"NAS 폴더 복사 완료: {nas_copy_progress['copied_files']}/{nas_copy_progress['total_files']} 파일")
+        # else:
+        #     print(f"NAS 폴더 복사 취소됨: {nas_copy_progress['copied_files']}/{nas_copy_progress['total_files']} 파일 복사됨")
+    except Exception as e:
+        error_msg = f"NAS 폴더 처리 중 오류 발생: {str(e)}"
+        nas_copy_progress["errors"].append(error_msg)
+        # print(error_msg)
+    finally:
+        nas_copy_progress["is_copying"] = False
 
 def stop_checker():
     return stop_infer_flag
@@ -684,6 +781,98 @@ async def unload_model_endpoint():
         return {"message": "모델 및 GPU 메모리 해제 완료"}
     except Exception as e:
         raise HTTPException(500, f"모델 해제 실패: {str(e)}")
+
+@app.post("/process_nas_folder")
+async def process_nas_folder(request: Request):
+    """NAS 폴더의 비디오 파일들을 uploads로 복사"""
+    data = await request.json()
+    nas_folder = data.get("nas_folder")
+    if not nas_folder:
+        raise HTTPException(400, "NAS 폴더 경로가 필요합니다.")
+    
+    print(f"원본 경로: {nas_folder}")
+    
+    # 경로 보안 검증
+    try:
+        # NAS_BASE_PATH 부분을 제거하고 NAS_TARGET_PATH부터 시작하는 경로로 변환
+        if nas_folder.startswith(NAS_BASE_PATH):
+            # NAS_BASE_PATH를 NAS_TARGET_PATH로 변경
+            nas_folder = nas_folder.replace(NAS_BASE_PATH, NAS_TARGET_PATH, 1)
+            print(f"경로 변환: {NAS_BASE_PATH} -> {NAS_TARGET_PATH}")
+        elif nas_folder.startswith('/home'):
+            # /home으로 시작하는 다른 경로도 NAS_TARGET_PATH로 변경
+            nas_folder = nas_folder.replace('/home', NAS_TARGET_PATH, 1)
+            print(f"경로 변환: /home -> {NAS_TARGET_PATH}")
+        
+        # 상대 경로인 경우 현재 작업 디렉토리 기준으로 절대 경로로 변환
+        if not nas_folder.startswith('/'):
+            nas_path = Path.cwd() / nas_folder
+            print(f"상대 경로 감지, 현재 작업 디렉토리: {Path.cwd()}")
+        else:
+            nas_path = Path(nas_folder)
+            print(f"절대 경로 감지")
+        
+        nas_path = nas_path.resolve()
+        print(f"정규화된 경로: {nas_path}")
+        
+        # 허용된 경로인지 확인 (보안상 필요한 경우)
+        # NAS_TARGET_PATH로 시작하는 경로만 허용
+        if not str(nas_path).startswith(NAS_TARGET_PATH):
+            raise HTTPException(400, f"허용되지 않은 경로입니다. {NAS_TARGET_PATH}로 시작하는 경로만 사용 가능합니다.")
+        
+        # 경로가 존재하는지 확인
+        if not nas_path.exists():
+            raise HTTPException(400, f"경로가 존재하지 않습니다: {nas_folder}")
+        
+        # 경로가 디렉토리인지 확인
+        if not nas_path.is_dir():
+            raise HTTPException(400, f"지정된 경로가 디렉토리가 아닙니다: {nas_folder}")
+            
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(400, f"경로 검증 실패: {str(e)}")
+    
+    # 이미 복사 중인지 확인
+    if nas_copy_progress["is_copying"]:
+        raise HTTPException(400, "이미 파일 복사가 진행 중입니다.")
+    
+    print(f"NAS 폴더 복사 시작: {nas_folder} -> {nas_path}")
+    
+    # 별도 스레드에서 복사 작업 실행
+    loop = asyncio.get_event_loop()
+    func = functools.partial(copy_nas_folder_sync, str(nas_path))
+    await loop.run_in_executor(None, func)
+    
+    return {
+        "message": "NAS 폴더 복사가 백그라운드에서 시작되었습니다.",
+        "total_files": nas_copy_progress["total_files"],
+        "copied_files": nas_copy_progress["copied_files"],
+        "errors": nas_copy_progress["errors"]
+    }
+
+@app.get("/nas_copy_progress")
+async def get_nas_copy_progress():
+    """NAS 폴더 복사 진행 상태 조회"""
+    return nas_copy_progress
+
+@app.post("/cancel_nas_copy")
+async def cancel_nas_copy():
+    """NAS 폴더 복사 취소"""
+    global nas_copy_progress
+    if nas_copy_progress["is_copying"]:
+        nas_copy_progress["is_copying"] = False
+        return {"message": "NAS 폴더 복사가 취소되었습니다."}
+    else:
+        return {"message": "복사 중인 작업이 없습니다."}
+
+@app.get("/nas_paths")
+async def get_nas_paths_endpoint():
+    """NAS 경로 설정 조회"""
+    return {
+        "base_path": NAS_BASE_PATH,
+        "target_path": NAS_TARGET_PATH
+    }
 
 if __name__ == "__main__":
     import uvicorn
