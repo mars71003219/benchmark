@@ -49,5 +49,6 @@
   },
   "devDependencies": {
     "typescript": "^4.9.5"
-  }
+  },
+  "proxy": "http://192.168.190.4:10000"
 }

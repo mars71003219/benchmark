@@ -61,7 +61,8 @@ export function useWebSocket(url: string) {
     const [ws, setWs] = useState<WebSocket | null>(null);
 
     useEffect(() => {
-        const socket = new WebSocket(url);
+        // 절대경로로 WebSocket 연결
+        const socket = new WebSocket('ws://192.168.190.4:10000/ws');
         setWs(socket);
 
         socket.onopen = () => {
@@ -87,15 +88,15 @@ export function useWebSocket(url: string) {
 
         socket.onclose = () => {
             console.log('WebSocket 연결 종료');
-            // 연결이 끊어지면 3초 후 재연결 시도
-            setTimeout(() => {
-                setWs(null);
-            }, 3000);
+            // 3초 후 재연결 시도는 필요시 별도 구현
         };
 
         return () => {
-            if (socket.readyState === WebSocket.OPEN) {
+            // 항상 close() 호출하여 리소스 누수 방지
+            try {
                 socket.close();
+            } catch (e) {
+                // 이미 닫힌 경우 무시
             }
         };
     }, [url]);

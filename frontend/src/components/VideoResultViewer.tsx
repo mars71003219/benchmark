@@ -17,7 +17,7 @@ const VideoResultViewer: React.FC = () => {
     useEffect(() => {
         if (mode === 'analysis') {
             setPlayerVisible(false);
-            fetch('http://localhost:10000/results/videos')
+            fetch('/results/videos')
                 .then(res => res.json())
                 .then(data => {
                     if (data.videos && data.videos.length > 0) {

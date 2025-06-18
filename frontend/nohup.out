@@ -1,0 +1,1508 @@
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1767389) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1767389) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.190.4:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1775373) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1775373) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/ConfusionMatrixDisplay.tsx
+  Line 6:8:  'CheckCircleIcon' is defined but never used   @typescript-eslint/no-unused-vars
+  Line 7:8:  'CancelIcon' is defined but never used        @typescript-eslint/no-unused-vars
+  Line 8:8:  'TrendingUpIcon' is defined but never used    @typescript-eslint/no-unused-vars
+  Line 9:8:  'TrendingFlatIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/ConfusionMatrixGraph.tsx
+  Line 2:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/CumulativeAccuracyGraph.tsx
+  Line 2:27:   'Paper' is defined but never used                   @typescript-eslint/no-unused-vars
+  Line 21:11:  'finalAccuracy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src/components/ModelSelector.tsx
+  Line 7:3:  'Alert' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/ProgressDisplay.tsx
+  Line 4:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/VideoPlayer.tsx
+  Line 4:8:  'VideocamIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/ConfusionMatrixDisplay.tsx
+  Line 6:8:  'CheckCircleIcon' is defined but never used   @typescript-eslint/no-unused-vars
+  Line 7:8:  'CancelIcon' is defined but never used        @typescript-eslint/no-unused-vars
+  Line 8:8:  'TrendingUpIcon' is defined but never used    @typescript-eslint/no-unused-vars
+  Line 9:8:  'TrendingFlatIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/ConfusionMatrixGraph.tsx
+  Line 2:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/CumulativeAccuracyGraph.tsx
+  Line 2:27:   'Paper' is defined but never used                   @typescript-eslint/no-unused-vars
+  Line 21:11:  'finalAccuracy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+src/components/ModelSelector.tsx
+  Line 7:3:  'Alert' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/ProgressDisplay.tsx
+  Line 4:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/components/VideoPlayer.tsx
+  Line 4:8:  'VideocamIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1783254) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1783254) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.190.4:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 413:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 415:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 432:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 441:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/SystemInfo.tsx
+  Line 4:10:  'Box' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1791184) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1791184) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Proxy error: Could not proxy request /main.0d19f52f8a2908032f73.hot-update.json from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+Something is already running on port 3000.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1797013) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1797013) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.190.4:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1820416) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1820416) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.190.4:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1837429) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1837429) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+Proxy error: Could not proxy request /main.3ff968e8fa99cd0d593a.hot-update.json from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/ProgressDisplay.tsx
+  Line 4:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/ProgressDisplay.tsx
+  Line 4:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/ProgressDisplay.tsx
+  Line 4:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.tsx
+  Line 6:22:    'List' is defined but never used                                     @typescript-eslint/no-unused-vars
+  Line 6:28:    'ListItem' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 6:38:    'ListItemText' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 6:52:    'ListItemSecondaryAction' is defined but never used                  @typescript-eslint/no-unused-vars
+  Line 7:5:     'Stack' is defined but never used                                    @typescript-eslint/no-unused-vars
+  Line 7:30:    'LinearProgress' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 12:8:    'DownloadIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+  Line 14:8:    'VideoResultViewer' is defined but never used                        @typescript-eslint/no-unused-vars
+  Line 22:8:    'PsychologyIcon' is defined but never used                           @typescript-eslint/no-unused-vars
+  Line 28:8:    'EventLog' is defined but never used                                 @typescript-eslint/no-unused-vars
+  Line 64:12:   'settingsOpen' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 64:26:   'setSettingsOpen' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  Line 66:27:   'setVideoDuration' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  Line 68:12:   'resultVideos' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  Line 73:12:   'currentUploadSessionFiles' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 76:12:   'isAnalysisVideoSelectOpen' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 417:11:  'isAnalysisComplete' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  Line 419:11:  'handleOpenAnalysisVideoSelect' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  Line 436:11:  'handleCloseAnalysisVideoSelect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 440:11:  'handleSelectAnalysisVideo' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  Line 445:11:  'selectedVideoUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+src/components/ProgressDisplay.tsx
+  Line 4:27:  'Paper' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /uploads from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /uploads from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1854006) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1854006) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.190.4:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+Proxy error: Could not proxy request /uploads from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /uploads from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+No issues found.
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/hooks/useWebSocket.ts
+  Line 3:31:   'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+  Line 36:7:   'initialState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  Line 61:12:  'ws' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /system_info from 192.168.190.4:3000 to http://192.168.190.4:10000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+The build failed because the process exited too early. This probably means the system ran out of memory or someone called `kill -9` on the process.
+
+> frontend@1.0.0 start
+> react-scripts start --host 0.0.0.0
+
+(node:1916368) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1916368) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled successfully!
+
+You can now view frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.190.4:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.

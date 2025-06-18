@@ -16,7 +16,7 @@ interface InferenceResultTableProps {
 }
 
 const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, classLabels }) => {
-  const detectionEvents = events.filter(e => e.type === 'detection' && e.data).reverse();
+  const detectionEvents = Array.isArray(events) ? events.filter(e => e && e.type === 'detection' && e.data).reverse() : [];
 
   return (
     <Paper sx={{ width: '100%', p: 2, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
@@ -39,17 +39,18 @@ const InferenceResultTable: React.FC<InferenceResultTableProps> = ({ events, cla
           </TableHead>
           <TableBody>
             {detectionEvents.map((event, index) => {
-              const predictionLabel = classLabels[event.data.prediction_label_id] || event.data.prediction_label;
+              if (!event.data) return null;
+              const predictionLabel = classLabels?.[event.data.prediction_label_id] || event.data.prediction_label;
               return (
                 <TableRow key={`${event.data.video_name}-${index}`} hover>
-                  <TableCell component="th" scope="row">{event.data.video_name}</TableCell>
-                  <TableCell align="right">{event.data.start_time.toFixed(2)}</TableCell>
-                  <TableCell align="right">{event.data.end_time.toFixed(2)}</TableCell>
-                  <TableCell>{predictionLabel}</TableCell>
-                  <TableCell align="right">{event.data.start_frame}</TableCell>
-                  <TableCell align="right">{event.data.end_frame}</TableCell>
-                  <TableCell align="right">{event.data.inference_time_ms}</TableCell>
-                  <TableCell align="right">{event.data.inference_fps}</TableCell>
+                  <TableCell component="th" scope="row">{event.data.video_name ?? '-'}</TableCell>
+                  <TableCell align="right">{typeof event.data.start_time === 'number' ? event.data.start_time.toFixed(2) : '-'}</TableCell>
+                  <TableCell align="right">{typeof event.data.end_time === 'number' ? event.data.end_time.toFixed(2) : '-'}</TableCell>
+                  <TableCell>{predictionLabel ?? '-'}</TableCell>
+                  <TableCell align="right">{event.data.start_frame ?? '-'}</TableCell>
+                  <TableCell align="right">{event.data.end_frame ?? '-'}</TableCell>
+                  <TableCell align="right">{event.data.inference_time_ms ?? '-'}</TableCell>
+                  <TableCell align="right">{event.data.inference_fps ?? '-'}</TableCell>
                 </TableRow>
               );
             })}

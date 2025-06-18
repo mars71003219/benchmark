@@ -27,9 +27,9 @@ const ProgressDisplay: React.FC<ProgressDisplayProps> = ({
           {/* 단일 비디오 클립 추론 진행률 */}
           <Box>
               <Typography variant="body2" component="div" color="text.secondary" noWrap title={currentVideo || ''}>
-                  단일 클립 진행률: {currentVideo || '-'} {currentProgress.toFixed(0)}%
+                  단일 클립 진행률: {currentVideo || '-'} {typeof currentProgress === 'number' && !isNaN(currentProgress) ? currentProgress.toFixed(0) : '0'}%
               </Typography>
-              <LinearProgress variant="determinate" value={currentProgress || 0} />
+              <LinearProgress variant="determinate" value={typeof currentProgress === 'number' && !isNaN(currentProgress) ? currentProgress : 0} />
           </Box>
           {/* 전체 클립 갯수 대비 진행률 */}
           <Box>

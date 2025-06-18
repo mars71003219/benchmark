@@ -60,7 +60,7 @@ function App() {
     const [frameInterval, setFrameInterval] = useState(90);
     const [inferPeriod, setInferPeriod] = useState(30);
     const [batchFrames, setBatchFrames] = useState(16);
-    const inferenceState = useWebSocket('ws://localhost:10000/ws');
+    const inferenceState = useWebSocket('/ws');
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [classLabels, setClassLabels] = useState<string[]>([]);
     const [videoDuration, setVideoDuration] = useState(0);
@@ -87,7 +87,7 @@ function App() {
     useEffect(() => {
         const fetchFiles = async () => {
             try {
-                const res = await fetch('http://localhost:10000/uploads');
+                const res = await fetch('/uploads');
                 if (!res.ok) throw new Error('업로드 파일 로딩 실패');
                 const data = await res.json();
                 if (Array.isArray(data.files)) {
@@ -113,7 +113,7 @@ function App() {
 
     useEffect(() => {
         let ws: WebSocket | null = null;
-        ws = new WebSocket('ws://localhost:10000/ws/realtime_overlay');
+        ws = new WebSocket('ws://192.168.190.4:10000/ws/realtime_overlay');
         ws.onopen = () => {
             console.log('실시간 오버레이 WebSocket 연결됨');
         };
@@ -192,12 +192,12 @@ function App() {
     const handleLoadModel = async (id: string) => {
         setModelStatus('loading');
         try {
-            const res = await fetch('http://localhost:10000/model', {
+            const modelRes = await fetch('/model', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model_id: id }),
             });
-            if (!res.ok) throw new Error('모델 로딩 실패');
-            const data = await res.json();
+            if (!modelRes.ok) throw new Error('모델 로딩 실패');
+            const data = await modelRes.json();
             setModelId(id); setModelStatus('loaded');
             if (data.class_labels) {
                 setClassLabels(data.class_labels);
@@ -209,24 +209,34 @@ function App() {
     };
     
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
+        let files = e.target.files;
         if (!files || files.length === 0) return;
 
-        setTotalFilesToUpload(files.length);
+        // Filter only video files (mp4, avi, mkv)
+        const allowedExtensions = [".mp4", ".avi", ".mkv"];
+        const filteredFiles = Array.from(files).filter(file => {
+            const lower = file.name.toLowerCase();
+            return allowedExtensions.some(ext => lower.endsWith(ext));
+        });
+        if (filteredFiles.length === 0) {
+            alert("폴더 내에 mp4, avi, mkv 파일이 없습니다.");
+            e.target.value = '';
+            return;
+        }
+
+        setTotalFilesToUpload(filteredFiles.length);
         setUploadedFileCount(0);
         setCurrentUploadSessionFiles([]);
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        for (let i = 0; i < filteredFiles.length; i++) {
+            const file = filteredFiles[i];
             const formData = new FormData();
             formData.append('files', file);
             formData.append('paths', file.webkitRelativePath || file.name);
-            
             try {
-                const res = await fetch('http://localhost:10000/upload', { method: 'POST', body: formData });
-                if (!res.ok) throw new Error(`파일 업로드 실패: ${file.name}`);
-                const data = await res.json();
-                
+                const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
+                if (!uploadRes.ok) throw new Error(`파일 업로드 실패: ${file.name}`);
+                const data = await uploadRes.json();
                 setUploadedFiles(prev => {
                     const newFiles = [...prev, ...data.files];
                     return newFiles.filter((v, idx, a) => a.findIndex(t => (t.name === v.name)) === idx);
@@ -235,26 +245,30 @@ function App() {
                 setCurrentUploadSessionFiles(prev => [...prev, data.files[0].name]);
             } catch (error) {
                 console.error(error);
-                alert(error); 
+                alert(error);
             }
         }
-        e.target.value = ''; 
+        e.target.value = '';
         setTotalFilesToUpload(0);
         setUploadedFileCount(0);
     };
 
     const handleRemoveFile = async (fileName: string) => {
-        await fetch(`http://localhost:10000/upload/${encodeURIComponent(fileName)}`, { method: 'DELETE' });
+        const res = await fetch(`/upload/${encodeURIComponent(fileName)}`, { method: 'DELETE' });
+        if (res.ok) {
         setUploadedFiles(prev => prev.filter(f => f.name !== fileName));
         if (selectedUploadedFileName === fileName) {
             setSelectedUploadedFileName('');
+            }
         }
     };
 
     const handleRemoveAllFiles = async () => {
-        await fetch('http://localhost:10000/uploads', { method: 'DELETE' });
+        const res = await fetch('/uploads', { method: 'DELETE' });
+        if (res.ok) {
         setUploadedFiles([]);
         setSelectedUploadedFileName('');
+        }
     };
 
     const handleFileSelectChange = (event: SelectChangeEvent<string>) => {
@@ -264,31 +278,32 @@ function App() {
     const handleStartInference = () => {
         setCumulativeAccuracyHistory([]);
         setMetricsHistory([]);
-        fetch('http://localhost:10000/infer', {
+        const body = {
+            interval: frameInterval,
+            infer_period: inferPeriod,
+            batch: batchFrames,
+            inference_mode: inferenceMode,
+            annotation_data: annotationData
+        };
+        fetch('/infer', {
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                interval: frameInterval, 
-                infer_period: inferPeriod, 
-                batch: batchFrames,
-                inference_mode: inferenceMode,
-                annotation_data: annotationData
-            }),
+            body: JSON.stringify(body),
         });
     };
 
     const handlePauseInference = () => {
-        fetch('http://localhost:10000/pause_infer', { method: 'POST' });
+        fetch('/pause_infer', { method: 'POST' });
         setIsPaused(true);
     };
 
     const handleResumeInference = () => {
-        fetch('http://localhost:10000/resume_infer', { method: 'POST' });
+        fetch('/resume_infer', { method: 'POST' });
         setIsPaused(false);
     };
 
     const handleStopInference = () => {
-        fetch('http://localhost:10000/stop_infer', { method: 'POST' });
+        fetch('/stop_infer', { method: 'POST' });
         setIsPaused(false);
     };
 
@@ -400,13 +415,13 @@ function App() {
         }
     };
     
-    const isAnalysisComplete = inferenceState.events.some(ev => ev.type === 'complete');
+    const isAnalysisComplete = !!inferenceState && Array.isArray(inferenceState.events) && inferenceState.events.some(ev => ev.type === 'complete');
     
     const handleOpenAnalysisVideoSelect = async () => {
         try {
-            const res = await fetch('http://localhost:10000/results/videos');
-            if (!res.ok) throw new Error('결과 비디오 로딩 실패');
-            const data = await res.json();
+            const resultsRes = await fetch('/results/videos');
+            if (!resultsRes.ok) throw new Error('결과 비디오 로딩 실패');
+            const data = await resultsRes.json();
             if (data.videos && Array.isArray(data.videos)) {
                 setResultVideos(data.videos);
                 setIsAnalysisVideoSelectOpen(true);
@@ -785,13 +800,13 @@ function App() {
                                                 {inferenceState.current_video ? inferenceState.current_video : '추론 중인 비디오 없음'}
                                             </Typography>
                                         </Box>
-                                        <ConfusionMatrixDisplay metrics={metricsHistory[metricsHistory.length - 1]} />
+                                        <ConfusionMatrixDisplay metrics={metricsHistory.length > 0 ? metricsHistory[metricsHistory.length - 1] : { tp: 0, tn: 0, fp: 0, fn: 0, precision: 0, recall: 0, f1_score: 0 }} />
                                     </Grid>
 
                                     {/* 오른쪽 절반 - 성능 지표 및 누적 정확도 그래프 */}
                                     <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                        <MetricsBarChart metrics={metricsHistory[metricsHistory.length - 1]} />
-                                        <CumulativeAccuracyGraph cumulativeAccuracyHistory={cumulativeAccuracyHistory} />
+                                        <MetricsBarChart metrics={metricsHistory.length > 0 ? metricsHistory[metricsHistory.length - 1] : { tp: 0, tn: 0, fp: 0, fn: 0, precision: 0, recall: 0, f1_score: 0 }} />
+                                        <CumulativeAccuracyGraph cumulativeAccuracyHistory={Array.isArray(cumulativeAccuracyHistory) ? cumulativeAccuracyHistory : []} />
                                     </Grid>
                                 </Grid>
                             </Paper>
@@ -805,7 +820,7 @@ function App() {
                         </Box>
                         {/* Confusion Matrix Graph - 30% height */}
                         <Box sx={{ height: '40%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
-                            <ConfusionMatrixGraph metrics={inferenceState.metrics} />
+                            <ConfusionMatrixGraph metrics={inferenceState && inferenceState.metrics ? inferenceState.metrics : { tp: 0, tn: 0, fp: 0, fn: 0, precision: 0, recall: 0, f1_score: 0 }} />
                         </Box>
                     </Grid>
                 </Grid>

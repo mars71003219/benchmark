@@ -80,7 +80,7 @@ const SystemInfo: React.FC<SystemInfoProps> = ({ sx }) => {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const res = await fetch('http://localhost:10000/system_info');
+        const res = await fetch('/system_info');
         if (res.ok) {
           const data = await res.json();
           setInfo(data);

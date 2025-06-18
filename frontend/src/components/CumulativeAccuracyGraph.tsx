@@ -9,19 +9,11 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
     // 항상 최상단에서 호출!
     const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
 
-    if (!cumulativeAccuracyHistory || cumulativeAccuracyHistory.length === 0) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
-                <Typography variant="body2" color="text.secondary">누적 정확도 데이터 없음</Typography>
-            </Box>
-        );
-    }
-
     // Get the last accuracy for the final accuracy line
-    const finalAccuracy = cumulativeAccuracyHistory[cumulativeAccuracyHistory.length - 1]?.accuracy || 0;
+    const finalAccuracy = cumulativeAccuracyHistory && cumulativeAccuracyHistory.length > 0 ? cumulativeAccuracyHistory[cumulativeAccuracyHistory.length - 1]?.accuracy : 0;
 
     // Determine max values for scaling
-    const maxProcessedClips = Math.max(...cumulativeAccuracyHistory.map(d => d.processed_clips), 0);
+    const maxProcessedClips = cumulativeAccuracyHistory && cumulativeAccuracyHistory.length > 0 ? Math.max(...cumulativeAccuracyHistory.map(d => d.processed_clips), 0) : 1;
     const maxAccuracy = 1.0; // Accuracy is always between 0 and 1
 
     const svgWidth = 450;
@@ -33,9 +25,9 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
         (value / maxProcessedClips) * (svgWidth - 2 * padding) + padding + offset;
     const yScale = (value: number) => svgHeight - padding - (value / maxAccuracy) * (svgHeight - 2 * padding);
 
-    const points = cumulativeAccuracyHistory.map(d => 
+    const points = cumulativeAccuracyHistory && cumulativeAccuracyHistory.length > 0 ? cumulativeAccuracyHistory.map(d => 
         `${xScale(d.processed_clips)},${yScale(d.accuracy)}`
-    ).join(' ');
+    ).join(' ') : '';
 
     // X-axis ticks and labels
     const xTicks = [0, Math.floor(maxProcessedClips / 2), maxProcessedClips].filter((v, i, a) => a.indexOf(v) === i);
@@ -73,9 +65,12 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
                 ))}
                 <text x={-20 + offset} y={svgHeight / 2} textAnchor="middle" transform={`rotate(-90 ${-20 + offset} ${svgHeight / 2})`} fontSize="14" fill="black" fontWeight="bold">Cumulative Accuracy</text>
 
-                {/* Data Line */}
-                <polyline fill="none" stroke="#1976d2" strokeWidth="3" points={points} style={{ filter: 'drop-shadow(0 2px 6px #b2dfdb)' }} />
-                {cumulativeAccuracyHistory.map((d, i) => (
+                {/* Data Line (only if data exists) */}
+                {points && (
+                    <polyline fill="none" stroke="#1976d2" strokeWidth="3" points={points} style={{ filter: 'drop-shadow(0 2px 6px #b2dfdb)' }} />
+                )}
+                {/* Data Points (only if data exists) */}
+                {cumulativeAccuracyHistory && cumulativeAccuracyHistory.length > 0 && cumulativeAccuracyHistory.map((d, i) => (
                     <g key={`point-${i}`}
                         onMouseEnter={() => setHoveredIdx(i)}
                         onMouseLeave={() => setHoveredIdx(null)}
@@ -89,7 +84,6 @@ const CumulativeAccuracyGraph: React.FC<CumulativeAccuracyGraphProps> = ({ cumul
                         )}
                     </g>
                 ))}
-
             </svg>
         </Box>
     );
