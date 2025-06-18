@@ -19,6 +19,7 @@ import psutil
 from pynvml import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
+import torch
 
 from utils import (
     load_model, process_video, create_overlay_video,
@@ -47,6 +48,7 @@ SAVE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 stop_infer_flag = False
 current_video_info = {}
 model, feature_extractor = None, None
+current_model_id = None  # 현재 로드된 모델 id를 저장
 
 # Global WebSocket connection for real-time overlay frames
 # This is a simplification. For a production app, you'd manage multiple client connections.
@@ -70,6 +72,26 @@ except NVMLError: pass
 
 @app.on_event("shutdown")
 def shutdown_event():
+    global model, feature_extractor, current_model_id
+    try:
+        try:
+            del model
+        except Exception:
+            pass
+        try:
+            del feature_extractor
+        except Exception:
+            pass
+        model = None
+        feature_extractor = None
+        current_model_id = None
+        import gc
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+    except Exception:
+        pass
     try: nvmlShutdown()
     except NVMLError: pass
 
@@ -376,19 +398,25 @@ async def start_inference_endpoint(request: Request):
     
     return {"message": "추론이 백그라운드에서 시작되었습니다."}
 
-# ... (다른 API 엔드포인트들은 이전과 동일) ...
 @app.post("/model")
 async def set_model_endpoint(request: Request):
-    global model, feature_extractor
+    global model, feature_extractor, current_model_id
     data = await request.json()
     model_id = data.get("model_id")
     if not model_id: raise HTTPException(400, "model_id가 필요합니다.")
     model, feature_extractor = load_model(model_id)
+    current_model_id = model_id  # 모델 id 저장
     return {"message": "모델 로드 완료"}
+
+@app.get("/current_model")
+async def get_current_model_endpoint():
+    global current_model_id
+    return {"model_id": current_model_id}
 
 @app.post("/upload")
 async def upload_videos_endpoint(request: Request):
     uploaded = []
+    skipped = []
     form = await request.form()
     files = form.getlist("files")
     paths = form.getlist("paths")
@@ -397,13 +425,14 @@ async def upload_videos_endpoint(request: Request):
         relative_path = Path(paths[i])
         full_path = UPLOAD_DIR / Path(relative_path).name
         # full_path.parent.mkdir(parents=True, exist_ok=True) # No need to create subdirectories
-        
+        if full_path.exists():
+            skipped.append(str(relative_path))
+            continue
         async with aiofiles.open(full_path, 'wb') as f:
             await f.write(await file.read())
-        
         metadata = get_video_metadata(str(full_path))
         uploaded.append({"name": str(relative_path), "size": full_path.stat().st_size, "duration": metadata['duration'] if metadata else None})
-    return {"files": uploaded}
+    return {"files": uploaded, "skipped": skipped}
 
 @app.get("/uploads")
 async def get_uploads_endpoint():
@@ -627,6 +656,34 @@ async def resume_infer_endpoint():
     pause_infer_flag = False
     resume_infer_flag = True
     return {"message": "추론 재개"}
+
+@app.get("/current_inference_state")
+async def get_current_inference_state_endpoint():
+    return current_video_info
+
+@app.post("/unload_model")
+async def unload_model_endpoint():
+    global model, feature_extractor, current_model_id
+    try:
+        try:
+            del model
+        except Exception:
+            pass
+        try:
+            del feature_extractor
+        except Exception:
+            pass
+        model = None
+        feature_extractor = None
+        current_model_id = None
+        import gc
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+        return {"message": "모델 및 GPU 메모리 해제 완료"}
+    except Exception as e:
+        raise HTTPException(500, f"모델 해제 실패: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
