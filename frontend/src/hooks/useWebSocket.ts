@@ -57,47 +57,50 @@ interface WebSocketState {
 }
 
 export function useWebSocket(url: string) {
-    const [state, setState] = useState<WebSocketState | null>(null);
-    const [ws, setWs] = useState<WebSocket | null>(null);
+    const [state, setState] = useState<any | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
-        // 절대경로로 WebSocket 연결
-        const socket = new WebSocket('ws://192.168.190.4:10000/ws');
-        setWs(socket);
+        let socket: WebSocket;
+        let reconnectTimeout: NodeJS.Timeout;
 
-        socket.onopen = () => {
-            console.log('WebSocket 연결됨');
-        };
+        function connect() {
+            const wsUrl = url.startsWith('ws') ? url : `ws://${window.location.hostname}:10000${url}`;
+            socket = new WebSocket(wsUrl);
+            wsRef.current = socket;
 
-        socket.onmessage = (event) => {
-            if (event.data === "ping") {
-                socket.send("pong");
-                return;
-            }
-            try {
-                const data = JSON.parse(event.data);
-                setState(data);
-            } catch (e) {
-                console.error('WebSocket 메시지 파싱 오류:', e);
-            }
-        };
+            socket.onopen = () => {
+                console.log('WebSocket 연결됨');
+            };
 
-        socket.onerror = (error) => {
-            console.error('WebSocket 오류:', error);
-        };
+            socket.onmessage = (event) => {
+                if (event.data === "ping") {
+                    socket.send("pong");
+                    return;
+                }
+                try {
+                    const data = JSON.parse(event.data);
+                    setState(data);
+                } catch (e) {
+                    // 실시간 스트림 등은 JSON이 아님
+                }
+            };
 
-        socket.onclose = () => {
-            console.log('WebSocket 연결 종료');
-            // 3초 후 재연결 시도는 필요시 별도 구현
-        };
+            socket.onerror = (error) => {
+                console.error('WebSocket 오류:', error);
+            };
+
+            socket.onclose = () => {
+                console.log('WebSocket 연결 종료, 3초 후 재연결 시도');
+                reconnectTimeout = setTimeout(connect, 3000);
+            };
+        }
+
+        connect();
 
         return () => {
-            // 항상 close() 호출하여 리소스 누수 방지
-            try {
-                socket.close();
-            } catch (e) {
-                // 이미 닫힌 경우 무시
-            }
+            if (wsRef.current) wsRef.current.close();
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
         };
     }, [url]);
 

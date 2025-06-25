@@ -17,6 +17,7 @@ import ModelSelector from './components/ModelSelector';
 import ModelLoadingAnimation from './components/ModelLoadingAnimation';
 import ProgressDisplay from './components/ProgressDisplay';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useOverlayWebSocket } from './hooks/useOverlayWebSocket';
 import './global.css';
 import { SelectChangeEvent } from '@mui/material';
 import PsychologyIcon from '@mui/icons-material/Psychology';
@@ -70,6 +71,7 @@ function App() {
     const [inferPeriod, setInferPeriod] = useState(30);
     const [batchFrames, setBatchFrames] = useState(16);
     const inferenceState = useWebSocket('/ws');
+    const overlayFrame = useOverlayWebSocket('/ws/realtime_overlay');
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [classLabels, setClassLabels] = useState<string[]>([]);
     const [videoDuration, setVideoDuration] = useState(0);
@@ -197,38 +199,6 @@ function App() {
             }
         }
     }, [uploadedFiles, selectedUploadedFileName]);
-
-    useEffect(() => {
-        let ws: WebSocket | null = null;
-        ws = new WebSocket('ws://192.168.190.4:10000/ws/realtime_overlay');
-        ws.onopen = () => {
-            console.log('실시간 오버레이 WebSocket 연결됨');
-        };
-        ws.onmessage = (event) => {
-            if (event.data === "ping") {
-                ws?.send("pong");
-                return;
-            }
-            setRealtimeOverlayFrame(`data:image/jpeg;base64,${event.data}`);
-        };
-        ws.onerror = (error) => {
-            console.error('실시간 오버레이 WebSocket 오류:', error);
-        };
-        ws.onclose = () => {
-            console.log('실시간 오버레이 WebSocket 연결 해제됨');
-            setRealtimeOverlayFrame(null);
-            setTimeout(() => {
-                if (ws) {
-                    ws.close();
-                }
-            }, 3000);
-        };
-        return () => {
-            if (ws) {
-                ws.close();
-            }
-        };
-    }, []);
 
     useEffect(() => {
         if (inferenceState) {
@@ -559,7 +529,7 @@ function App() {
         }
     };
     
-    const isAnalysisComplete = !!inferenceState && Array.isArray(inferenceState.events) && inferenceState.events.some(ev => ev.type === 'complete');
+    const isAnalysisComplete = !!inferenceState && Array.isArray(inferenceState.events) && inferenceState.events.some((ev: { type: string }) => ev.type === 'complete');
     
     const handleOpenAnalysisVideoSelect = async () => {
         try {
@@ -969,9 +939,9 @@ function App() {
                                             minHeight: 0,
                                             position: 'relative'
                                         }}>
-                                            {realtimeOverlayFrame ? (
+                                            {overlayFrame ? (
                                                 <img 
-                                                    src={realtimeOverlayFrame} 
+                                                    src={`data:image/jpeg;base64,${overlayFrame}`} 
                                                     alt="Realtime Overlay" 
                                                     style={{ 
                                                         maxWidth: '100%', 
