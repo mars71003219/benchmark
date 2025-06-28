@@ -1,0 +1,46 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: video-backend
+    command: uvicorn main:app --host 0.0.0.0 --port 10000 --reload
+    ports:
+      - "10000:10000"
+      - "5678:5678"
+    volumes:
+      - ${ANALYSIS_HOME_DIR}/backend:/app
+      - ${ANALYSIS_HOME_DIR}/uploads:/uploads
+      - ${ANALYSIS_HOME_DIR}/models:/models
+      - ${AIVANAS_SVR_DIR}:/aivanas
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    env_file:
+      - .env
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder # Use the 'builder' stage for development
+    container_name: video-frontend
+    command: npm start
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${ANALYSIS_HOME_DIR}/frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    restart: always

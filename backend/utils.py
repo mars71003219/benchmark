@@ -186,7 +186,7 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
     ffmpeg_cmd = [
         'ffmpeg', '-y', '-f', 'rawvideo', '-vcodec', 'rawvideo',
         '-pix_fmt', 'bgr24', '-s', f'{width}x{height}', '-r', str(fps), '-i', '-',
-        '-c:v', 'libopenh264', '-pix_fmt', 'yuv420p', '-movflags', 'faststart', str(output_path)
+        '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', 'faststart', str(output_path)
     ]
     
     proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)

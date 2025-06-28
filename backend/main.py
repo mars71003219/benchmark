@@ -1,5 +1,10 @@
 # /backend/main.py
 
+import logging
+logging.getLogger().setLevel(logging.CRITICAL)
+for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi", "starlette"):
+    logging.getLogger(logger_name).setLevel(logging.CRITICAL)
+
 from fastapi import FastAPI, UploadFile, File, WebSocket, HTTPException, BackgroundTasks, Request, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -16,12 +21,27 @@ import sys
 import base64
 import csv
 import psutil
-from pynvml import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 import torch
-import logging
 import time
+import multiprocessing as mp
+
+# pynvml 관련 import를 try-except로 감싸서 선택적으로 import
+try:
+    from pynvml import *
+    NVML_AVAILABLE = True
+except ImportError:
+    NVML_AVAILABLE = False
+    # 더미 함수들 정의
+    def nvmlInit(): pass
+    def nvmlShutdown(): pass
+    def nvmlDeviceGetCount(): return 0
+    def nvmlDeviceGetHandleByIndex(index): return None
+    def nvmlDeviceGetName(handle): return "N/A"
+    def nvmlDeviceGetMemoryInfo(handle): return type('obj', (object,), {'used': 0, 'total': 0})()
+    def nvmlDeviceGetUtilizationRates(handle): return type('obj', (object,), {'gpu': 0})()
+    class NVMLError(Exception): pass
 
 from utils import (
     load_model, process_video, create_overlay_video,
@@ -41,14 +61,14 @@ app.add_middleware(
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
-RESULTS_DIR = Path("/aivanas/raw/action/eval_results/temp_results")
-SAVE_RESULTS_DIR = Path("/aivanas/raw/action/eval_results/save_results")
+RESULTS_DIR = Path("/aivanas/raw/surveillance/action/eval_results/temp_results")
+SAVE_RESULTS_DIR = Path("/aivanas/raw/surveillance/action/eval_results/save_results")
 UPLOAD_DIR.mkdir(exist_ok=True)
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 SAVE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-stop_infer_flag = False
-current_video_info = {}
+# === 멀티프로세스 기반으로 변경됨 - 기존 글로벌 변수들은 shared_state로 대체 ===
+stop_infer_flag = False  # 추가: stop_infer_flag 정의
 model, feature_extractor = None, None
 current_model_id = None  # 현재 로드된 모델 id를 저장
 
@@ -56,17 +76,17 @@ current_model_id = None  # 현재 로드된 모델 id를 저장
 # This is a simplification. For a production app, you'd manage multiple client connections.
 realtime_overlay_websocket: WebSocket | None = None
 
-# Global counters for metrics (they are reset in reset_inference_state)
-global_tp = 0
-global_tn = 0
-global_fp = 0
-global_fn = 0
-global_total_processed_clips = 0
-global_correct_predictions = 0
+# === 기존 글로벌 변수들은 shared_state로 대체됨 ===
+# global_tp = 0
+# global_tn = 0
+# global_fp = 0
+# global_fn = 0
+# global_total_processed_clips = 0
+# global_correct_predictions = 0
 
-pause_infer_flag = False
-resume_infer_flag = False
-paused_video_name = None
+# pause_infer_flag = False
+# resume_infer_flag = False
+# paused_video_name = None
 
 # NAS 폴더 복사 진행 상태 추적
 nas_copy_progress = {
@@ -84,9 +104,11 @@ NAS_TARGET_PATH = os.getenv('NAS_TARGET_PATH', '/aivanas')
 
 print(f"NAS 경로 설정: {NAS_BASE_PATH} -> {NAS_TARGET_PATH}")
 
-try:
-    nvmlInit()
-except NVMLError: pass
+if NVML_AVAILABLE:
+    try:
+        nvmlInit()
+    except NVMLError: 
+        pass
 
 logging.basicConfig(
     level=logging.CRITICAL,  # CRITICAL만 출력
@@ -103,6 +125,36 @@ def throttled_push_state(state, min_interval=1.0):
     if now - last_push_time > min_interval:
         push_state(state)
         last_push_time = now
+
+# reset_inference_state 함수 추가
+def reset_inference_state():
+    global stop_infer_flag
+    stop_infer_flag = False
+    # shared_state 초기화
+    if 'shared_state' in globals():
+        shared_state.clear()
+        shared_state.update({
+            "total_videos": 0,
+            "processed_videos": 0,
+            "current_video": None,
+            "current_progress": 0,
+            "events": [],
+            "per_video_progress": {},
+            "is_inferencing": False,
+            "cumulative_accuracy": 0.0,
+            "metrics": {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "precision": 0.0, "recall": 0.0, "f1_score": 0.0},
+        })
+    # Clear queues when state is reset for new inference
+    while not realtime_frame_queue.empty():
+        try: 
+            realtime_frame_queue.get_nowait()
+        except asyncio.QueueEmpty: 
+            pass
+    while not inference_state_queue.empty():
+        try: 
+            inference_state_queue.get_nowait()
+        except asyncio.QueueEmpty: 
+            pass
 
 @app.on_event("shutdown")
 def shutdown_event():
@@ -126,36 +178,16 @@ def shutdown_event():
             torch.cuda.ipc_collect()
     except Exception:
         pass
-    try: nvmlShutdown()
-    except NVMLError: pass
+    try: 
+        if NVML_AVAILABLE:
+            nvmlShutdown()
+    except NVMLError: 
+        pass
 
-def reset_inference_state():
-    global current_video_info, stop_infer_flag, global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
-    stop_infer_flag = False
-    current_video_info = {
-        "total_videos": 0, "processed_videos": 0, "current_video": None,
-        "current_progress": 0, "events": [], "per_video_progress": {},
-        "is_inferencing": False,
-        "cumulative_accuracy": 0.0, # New field
-        "metrics": {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "precision": 0.0, "recall": 0.0, "f1_score": 0.0}, # New field
-    }
-    # Reset global counters too
-    global_tp = 0
-    global_tn = 0
-    global_fp = 0
-    global_fn = 0
-    global_total_processed_clips = 0
-    global_correct_predictions = 0
-    # Clear queues when state is reset for new inference
-    while not realtime_frame_queue.empty():
-        try: realtime_frame_queue.get_nowait()
-        except asyncio.QueueEmpty: pass
-    while not inference_state_queue.empty():
-        try: inference_state_queue.get_nowait()
-        except asyncio.QueueEmpty: pass
-    # Also push initial state to queue
-    try: push_state(current_video_info.copy())
-    except asyncio.QueueFull: pass
+# === 기존 함수들은 멀티프로세스 기반으로 대체됨 ===
+# def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict, min_consecutive: int = 3):
+#     # === 이 함수는 멀티프로세스 워커로 대체됨 ===
+#     pass
 
 def reset_nas_copy_progress():
     global nas_copy_progress
@@ -249,248 +281,59 @@ def remove_video_results_from_csv(csv_path, video_name):
     df = df[df['video_name'] != video_name]
     df.to_csv(csv_path, index=False)
 
-def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict, min_consecutive: int = 3):
-    global global_tp, global_tn, global_fp, global_fn, global_total_processed_clips, global_correct_predictions
-    global pause_infer_flag, resume_infer_flag, paused_video_name
-    reset_inference_state() # This will also reset global counters
-    current_video_info["is_inferencing"] = True # Set to true initially
-    try:
-        # Send initial "is_inferencing: True" state
-        try: push_state(current_video_info.copy())
-        except asyncio.QueueFull: pass
-
-        video_files = sorted([p for p in UPLOAD_DIR.glob('*') if p.suffix in ['.mp4', '.avi', '.mov']])
-        current_video_info["total_videos"] = len(video_files)
-        try: push_state(current_video_info.copy())
-        except asyncio.QueueFull: pass
-        
-        final_results = []  # 최종 결과를 저장할 리스트
-
-        # 오버레이 비디오 생성을 위한 ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=min(os.cpu_count(), 4)) as overlay_executor:
-            overlay_futures = []
-
-            resume_from_video = None
-            if resume_infer_flag and paused_video_name:
-                resume_from_video = paused_video_name
-                resume_infer_flag = False
-
-            for i, video_path in enumerate(video_files):
-                # RESUME: 중단된 비디오부터 시작
-                if resume_from_video:
-                    if video_path.name != resume_from_video:
-                        continue
-                    else:
-                        resume_from_video = None
-                        # results.csv에서 해당 비디오 결과 삭제
-                        remove_video_results_from_csv(save_dir / "results.csv", video_path.name)
-                        remove_video_results_from_csv(save_dir / "final_results.csv", video_path.name)
-
-                # PAUSE 체크
-                while pause_infer_flag:
-                    paused_video_name = video_path.name
-                    import time
-                    time.sleep(0.5)
-
-                if stop_checker():
-                    current_video_info["events"].append({"type": "stop", "timestamp": datetime.now().isoformat()})
-                    break
-
-                current_video_info["current_video"] = video_path.name
-                current_video_info["events"].append({"type": "start", "video": video_path.name, "timestamp": datetime.now().isoformat()})
-                try: push_state(current_video_info.copy())
-                except asyncio.QueueFull: pass
-
-                current_video_name = video_path.name
-                video_annotations_for_current_video = annotation_data.get(current_video_name, {})
-                video_results = []  # 현재 비디오의 모든 추론 결과를 저장
-
-                # Callbacks
-                def progress_callback(done, total):
-                    current_video_info["current_progress"] = int(done / total * 100) if total > 0 else 0
-                    try: throttled_push_state(current_video_info.copy())
-                    except asyncio.QueueFull: pass
-
-                def result_callback(result: Dict):
-                    current_video_info["events"].append({
-                        "type": "detection", "video": video_path.name,
-                        "timestamp": datetime.now().isoformat(), "data": result
-                    })
-                    try: throttled_push_state(current_video_info.copy())
-                    except asyncio.QueueFull: pass
-                    video_results.append(result)
-
-                def frame_callback(frame_data: bytes):
-                    try: realtime_frame_queue.put_nowait(frame_data)
-                    except asyncio.QueueFull: pass
-
-                def pause_or_stop_checker():
-                    global pause_infer_flag, paused_video_name, stop_infer_flag, current_video_info
-                    while pause_infer_flag:
-                        paused_video_name = current_video_info.get("current_video")
-                        import time; time.sleep(0.5)
-                    return stop_infer_flag
-                
-                final_result_for_this_video = None
-                try:
-                    process_video(
-                        video_path=video_path, model=model, feature_extractor=feature_extractor,
-                        sampling_window_frames=interval, sliding_window_step_frames=infer_period,
-                        num_frames_to_sample=batch, progress_callback=progress_callback,
-                        result_callback=result_callback, stop_checker=pause_or_stop_checker,
-                        frame_callback=frame_callback,
-                    )
-
-                    if video_results:
-                        # 클립별 결과 CSV 저장
-                        csv_path = save_dir / "results.csv"
-                        f_existed = csv_path.is_file()
-                        with open(csv_path, 'a', newline='') as f:
-                            writer = csv.DictWriter(f, fieldnames=['video_name', 'start_time', 'end_time', 'prediction_label', 'start_frame', 'end_frame', 'inference_time_ms', 'inference_fps'])
-                            if not f_existed: writer.writeheader()
-                            writer.writerows(video_results)
-
-                        # 비디오 최종 레이블 결정 - 연속된 fight 갯수 기준으로 변경
-                        all_labels = [r["prediction_label"] for r in video_results]
-                        final_label_for_video = "NonFight" # Default
-                        
-                        # 연속된 fight 갯수 계산
-                        max_consecutive_fight = 0
-                        current_consecutive_fight = 0
-                        
-                        for label in all_labels:
-                            if not label.lower().startswith("non"):
-                                current_consecutive_fight += 1
-                                max_consecutive_fight = max(max_consecutive_fight, current_consecutive_fight)
-                            else:
-                                current_consecutive_fight = 0
-                        
-                        # 연속된 fight 갯수가 min_consecutive 이상이면 Fight로 판정
-                        if max_consecutive_fight >= min_consecutive:
-                            final_label_for_video = "Fight"
-                        else:
-                            final_label_for_video = "NonFight"
-
-                        # 메트릭 계산 및 최종 결과 객체 생성
-                        anno_label = video_annotations_for_current_video.get("AR", {}).get("label")
-                        metrics_val = None
-                        if anno_label and final_label_for_video:
-                            is_positive_class = "Fight"
-                            is_negative_class = "NonFight"
-                            if anno_label == is_positive_class:
-                                metrics_val = "TP" if final_label_for_video == is_positive_class else "FN"
-                            elif anno_label == is_negative_class:
-                                metrics_val = "TN" if final_label_for_video == is_negative_class else "FP"
-                        
-                        final_result_for_this_video = {
-                            "video_name": video_path.name,
-                            "final_pred_label": final_label_for_video,
-                            "anno_label": anno_label,
-                            "metrics": metrics_val
-                        }
-                        final_results.append(final_result_for_this_video)
-
-                        # 전역 메트릭 업데이트
-                        if metrics_val == "TP": global_tp += 1
-                        elif metrics_val == "TN": global_tn += 1
-                        elif metrics_val == "FP": global_fp += 1
-                        elif metrics_val == "FN": global_fn += 1
-                        
-                        if metrics_val:
-                            global_total_processed_clips += 1
-                            if (metrics_val == "TP" or metrics_val == "TN"):
-                                global_correct_predictions += 1
-                        
-                        # 누적 정확도 및 메트릭 UI 업데이트
-                        if global_total_processed_clips > 0:
-                            current_video_info["cumulative_accuracy"] = global_correct_predictions / global_total_processed_clips
-                        precision = global_tp / (global_tp + global_fp) if (global_tp + global_fp) > 0 else 0.0
-                        recall = global_tp / (global_tp + global_fn) if (global_tp + global_fn) > 0 else 0.0
-                        f1_score = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-                        current_video_info["metrics"] = {
-                            "tp": global_tp, "tn": global_tn, "fp": global_fp, "fn": global_fn,
-                            "precision": round(precision, 2), "recall": round(recall, 2), "f1_score": round(f1_score, 2)
-                        }
-                        try: push_state(current_video_info.copy())
-                        except asyncio.QueueFull: pass
-
-                        # 오버레이 비디오 생성 병렬 실행
-                        overlay_path = save_dir / f"{video_path.stem}_overlay.mp4"
-                        future = overlay_executor.submit(create_overlay_video, video_path, video_results, overlay_path)
-                        overlay_futures.append(future)
-
-                    current_video_info["events"].append({"type": "video_processed", "video": video_path.name, "timestamp": datetime.now().isoformat()})
-                except Exception as e:
-                    print(f"비디오 처리 중 에러 발생: {e}")
-                    current_video_info["events"].append({"type": "error", "message": str(e), "timestamp": datetime.now().isoformat()})
-                finally:
-                    current_video_info["processed_videos"] = i + 1 # Ensure this is updated even on error
-                    try: push_state(current_video_info.copy())
-                    except asyncio.QueueFull: pass
-
-
-                # 비디오별 최종 결과 CSV에 추가
-                if final_result_for_this_video:
-                    csv_path = save_dir / "final_results.csv"
-                    field_names = ['video_name', 'final_pred_label', 'anno_label', 'metrics']
-                    file_exists = csv_path.is_file()
-                    with open(csv_path, 'a', newline='', encoding='utf-8') as f:
-                        writer = csv.DictWriter(f, fieldnames=field_names)
-                        if not file_exists: writer.writeheader()
-                        writer.writerow(final_result_for_this_video)
-
-            # 모든 비디오 처리가 끝난 후, 오버레이 비디오 생성이 완료될 때까지 대기
-            if overlay_futures:
-                current_video_info["events"].append({"type": "overlay_creation_start", "timestamp": datetime.now().isoformat()})
-                try: push_state(current_video_info.copy())
-                except asyncio.QueueFull: pass
-                
-                for future in as_completed(overlay_futures):
-                    try:
-                        future.result() # Wait for overlay video creation to complete
-                    except Exception as e:
-                        print(f"오버레이 비디오 생성 중 에러 발생: {e}")
-                        current_video_info["events"].append({"type": "error", "message": f"오버레이 생성 실패: {e}", "timestamp": datetime.now().isoformat()})
-                        try: push_state(current_video_info.copy())
-                        except asyncio.QueueFull: pass
-        
-        current_video_info["events"].append({"type": "complete", "timestamp": datetime.now().isoformat()})
-        # 모든 비디오 추론이 정상적으로 끝났을 때 결과 파일 이동
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        done_dir = SAVE_RESULTS_DIR / f'{timestamp}_done_success'
-        done_dir.mkdir(parents=True, exist_ok=True)
-        for f in RESULTS_DIR.glob("*"):
-            shutil.move(str(f), str(done_dir / f.name))
-
-        # 전체 metrics csv 저장
-        metrics_row = current_video_info.get("metrics", {})
-        if metrics_row:
-            import pandas as pd
-            df_metrics = pd.DataFrame([metrics_row])
-            df_metrics.to_csv(done_dir / 'model_evaluation_metrics.csv', index=False)
-    finally:
-        current_video_info["is_inferencing"] = False # Ensure this is always set to False
-        try: push_state(current_video_info.copy()) # Final state update
-        except asyncio.QueueFull: pass
-
+# === 기존 함수들은 멀티프로세스 기반으로 대체됨 ===
+# def process_all_videos_sync(interval, infer_period, batch, save_dir, inference_mode: str, annotation_data: Dict, min_consecutive: int = 3):
+#     # === 이 함수는 멀티프로세스 워커로 대체됨 ===
+#     pass
 
 @app.post("/infer")
 async def start_inference_endpoint(request: Request):
-    if not model: raise HTTPException(400, "모델이 로드되지 않았습니다.")
-    if not any(UPLOAD_DIR.iterdir()): raise HTTPException(400, "업로드된 비디오가 없습니다.")
-    if current_video_info.get("is_inferencing"): raise HTTPException(400, "이미 추론이 진행 중입니다.")
+    if not model: 
+        raise HTTPException(400, "모델이 로드되지 않았습니다.")
+    if not any(UPLOAD_DIR.iterdir()): 
+        raise HTTPException(400, "업로드된 비디오가 없습니다.")
+    
+    # 상태 초기화
+    reset_inference_state()
     
     data = await request.json()
     interval = data.get("interval", 90)
     infer_period = data.get("infer_period", 30)
     batch = data.get("batch", 16)
-    inference_mode = data.get("inference_mode", "default") # 'AR' or 'AL'
-    annotation_data = data.get("annotation_data", {}) # Annotation data from frontend
-    min_consecutive = data.get("min_consecutive", 3) # 연속된 fight 갯수 기준
+    inference_mode = data.get("inference_mode", "default")
+    annotation_data = data.get("annotation_data", {})
+    min_consecutive = data.get("min_consecutive", 3)
+    model_id = current_model_id
+
+    video_files = sorted([p for p in UPLOAD_DIR.glob('*') if p.suffix in ['.mp4', '.avi', '.mov']])
     
-    loop = asyncio.get_event_loop()
-    func = functools.partial(process_all_videos_sync, interval, infer_period, batch, RESULTS_DIR, inference_mode, annotation_data, min_consecutive)
-    await loop.run_in_executor(None, func)
+    # shared_state 초기화
+    shared_state.clear()
+    shared_state.update({
+        'is_inferencing': True,
+        'total_videos': len(video_files),
+        'processed_videos': 0,
+        'events': [],
+        'current_video': None,
+        'current_progress': 0,
+        'per_video_progress': {},
+        'cumulative_accuracy': 0.0,
+        'metrics': {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "precision": 0.0, "recall": 0.0, "f1_score": 0.0},
+    })
+    
+    for video_path in video_files:
+        task = {
+            'video_path': video_path,
+            'interval': interval,
+            'infer_period': infer_period,
+            'batch': batch,
+            'model_id': model_id,
+            'inference_mode': inference_mode,
+            'annotation_data': annotation_data,
+            'min_consecutive': min_consecutive
+        }
+        inference_task_queue.put(task)
+        shared_state['events'].append({"type": "start", "video": video_path.name, "timestamp": datetime.now().isoformat()})
     
     return {"message": "추론이 백그라운드에서 시작되었습니다."}
 
@@ -499,7 +342,8 @@ async def set_model_endpoint(request: Request):
     global model, feature_extractor, current_model_id
     data = await request.json()
     model_id = data.get("model_id")
-    if not model_id: raise HTTPException(400, "model_id가 필요합니다.")
+    if not model_id: 
+        raise HTTPException(400, "model_id가 필요합니다.")
     model, feature_extractor = load_model(model_id)
     current_model_id = model_id  # 모델 id 저장
     return {"message": "모델 로드 완료"}
@@ -518,14 +362,27 @@ async def upload_videos_endpoint(request: Request):
     paths = form.getlist("paths")
 
     for i, file in enumerate(files):
-        relative_path = Path(paths[i])
-        full_path = UPLOAD_DIR / Path(relative_path).name
-        # full_path.parent.mkdir(parents=True, exist_ok=True) # No need to create subdirectories
-        if full_path.exists():
-            skipped.append(str(relative_path))
-            continue
-        async with aiofiles.open(full_path, 'wb') as f:
-            await f.write(await file.read())
+        if isinstance(file, str):
+            # paths[i]가 파일 경로인 경우
+            relative_path = Path(paths[i])
+            full_path = UPLOAD_DIR / Path(relative_path).name
+            if full_path.exists():
+                skipped.append(str(relative_path))
+                continue
+            # 파일이 이미 존재하는 경우 스킵
+            if full_path.exists():
+                skipped.append(str(relative_path))
+                continue
+        else:
+            # UploadFile 객체인 경우
+            relative_path = Path(paths[i])
+            full_path = UPLOAD_DIR / Path(relative_path).name
+            if full_path.exists():
+                skipped.append(str(relative_path))
+                continue
+            async with aiofiles.open(full_path, 'wb') as f:
+                await f.write(await file.read())
+        
         metadata = get_video_metadata(str(full_path))
         uploaded.append({"name": str(relative_path), "size": full_path.stat().st_size, "duration": metadata['duration'] if metadata else None})
     return {"files": uploaded, "skipped": skipped}
@@ -546,9 +403,12 @@ async def get_uploads_endpoint():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
-        await websocket.send_json(current_video_info.copy())
+        if shared_state is None:
+            await websocket.send_json({"error": "서버 초기화 중입니다. 잠시 후 다시 시도해 주세요."})
+            return
+        await websocket.send_json(dict(shared_state))
         while True:
-            await websocket.send_json(current_video_info.copy())
+            await websocket.send_json(dict(shared_state))
             # ping/pong keepalive
             try:
                 await websocket.send_text("ping")
@@ -580,13 +440,15 @@ async def stop_infer_endpoint():
 @app.delete("/upload/{filename}")
 async def delete_file_endpoint(filename: str):
     path = UPLOAD_DIR / filename
-    if path.exists(): path.unlink()
+    if path.exists(): 
+        path.unlink()
     return {"message": f"{filename} 삭제 완료"}
 
 @app.delete("/uploads")
 async def delete_all_files_endpoint():
     for f in UPLOAD_DIR.glob("*"):
-        if f.is_file(): f.unlink()
+        if f.is_file(): 
+            f.unlink()
     reset_inference_state()
     return {"message": "모든 업로드 파일 삭제 완료"}
 
@@ -616,15 +478,17 @@ async def get_system_info_endpoint():
         info["cpu"] = psutil.cpu_percent(0.1)
         vmem = psutil.virtual_memory()
         info["ram"], info["ram_used_mb"], info["ram_total_mb"] = vmem.percent, vmem.used / 1e6, vmem.total / 1e6
-    except Exception: pass
+    except Exception: 
+        pass
     try:
-        if nvmlDeviceGetCount() > 0:
+        if NVML_AVAILABLE and nvmlDeviceGetCount() > 0:
             handle = nvmlDeviceGetHandleByIndex(0)
             info["gpu"] = nvmlDeviceGetName(handle)
             mem = nvmlDeviceGetMemoryInfo(handle)
             info["gpuMem"] = f"{mem.used/1e6:.0f}MB / {mem.total/1e6:.0f}MB"
             info["gpuUtil"] = nvmlDeviceGetUtilizationRates(handle).gpu
-    except NVMLError: pass
+    except NVMLError: 
+        pass
     return info
 
 @app.get("/results/videos")
@@ -659,7 +523,8 @@ async def get_overlay_video_endpoint(video_id: str):
 @app.get("/results.csv")
 async def get_results_csv_endpoint():
     path = RESULTS_DIR / "results.csv"
-    if not path.exists(): raise HTTPException(404, "파일 없음")
+    if not path.exists(): 
+        raise HTTPException(404, "파일 없음")
     return FileResponse(path)
 
 @app.get("/video_metadata/{video_path}")
@@ -757,7 +622,7 @@ async def resume_infer_endpoint():
 
 @app.get("/current_inference_state")
 async def get_current_inference_state_endpoint():
-    return current_video_info
+    return dict(shared_state)
 
 @app.post("/unload_model")
 async def unload_model_endpoint():
@@ -886,7 +751,128 @@ def push_state(state):
             except asyncio.QueueEmpty:
                 break
 
+# === 멀티프로세스 공유 객체 및 큐 선언 ===
+manager = None
+inference_task_queue = None
+inference_result_queue = None
+overlay_task_queue = None
+overlay_result_queue = None
+shared_state = None
+
+@app.on_event("startup")
+def startup_event():
+    global manager, inference_task_queue, inference_result_queue, overlay_task_queue, overlay_result_queue, shared_state
+    import multiprocessing as mp
+    manager = mp.Manager()
+    inference_task_queue = manager.Queue()
+    inference_result_queue = manager.Queue()
+    overlay_task_queue = manager.Queue()
+    overlay_result_queue = manager.Queue()
+    shared_state = manager.dict()
+    start_workers()
+
+# === 추론 워커 함수 ===
+def inference_worker(task_q, result_q, overlay_q, shared_state):
+    import torch
+    from utils import load_model, process_video
+    import csv
+    from pathlib import Path
+    model, feature_extractor = None, None
+    while True:
+        task = task_q.get()
+        if task is None:
+            break
+        # 모델 로드/캐시 (간단화)
+        if model is None or feature_extractor is None or task.get('model_id') != getattr(model, 'model_id', None):
+            model, feature_extractor = load_model(task['model_id'])
+            if hasattr(model, 'model_id'):
+                model.model_id = task['model_id']
+        # 실제 추론 함수 호출
+        result = process_video(
+            video_path=task['video_path'],
+            model=model,
+            feature_extractor=feature_extractor,
+            sampling_window_frames=task['interval'],
+            sliding_window_step_frames=task['infer_period'],
+            num_frames_to_sample=task['batch'],
+            progress_callback=lambda current, total: None,  # 더미 콜백
+            result_callback=lambda result: None,  # 더미 콜백
+            stop_checker=lambda: False,
+            frame_callback=lambda frame: None  # 더미 콜백
+        )
+        # CSV에 결과 저장
+        if result:
+            csv_path = Path("/aivanas/raw/surveillance/action/eval_results/temp_results/results.csv")
+            csv_path.parent.mkdir(parents=True, exist_ok=True)
+            f_existed = csv_path.is_file()
+            with open(csv_path, 'a', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=['video_name', 'start_time', 'end_time', 'prediction_label', 'start_frame', 'end_frame', 'inference_time_ms', 'inference_fps'])
+                if not f_existed: writer.writeheader()
+                writer.writerows(result)
+        # 오버레이 작업을 큐에 넣기
+        if result:
+            overlay_task = {
+                'video_path': task['video_path'],
+                'results': result,
+                'output_path': Path("/aivanas/raw/surveillance/action/eval_results/temp_results") / f"{task['video_path'].stem}_overlay.mp4"
+            }
+            overlay_q.put(overlay_task)
+        # 상태 업데이트
+        shared_state['processed_videos'] = shared_state.get('processed_videos', 0) + 1
+        shared_state['events'].append({"type": "video_processed", "video": task['video_path'].name, "timestamp": datetime.now().isoformat()})
+        
+        # 모든 비디오 처리 완료 시 추론 종료
+        if shared_state.get('processed_videos', 0) >= shared_state.get('total_videos', 0):
+            shared_state['is_inferencing'] = False
+            shared_state['events'].append({"type": "complete", "timestamp": datetime.now().isoformat()})
+        
+        result_q.put({'video_name': str(task['video_path']), 'results': result})
+
+# === 오버레이 워커 함수 ===
+def overlay_worker(task_q, result_q, shared_state):
+    from utils import create_overlay_video
+    while True:
+        task = task_q.get()
+        if task is None:
+            break
+        create_overlay_video(task['video_path'], task['results'], task['output_path'])
+        shared_state['events'].append({"type": "overlay_created", "video": task['video_path'].name, "timestamp": datetime.now().isoformat()})
+        result_q.put({'video_name': str(task['video_path']), 'overlay_done': True})
+
+# === 상태 관리 프로세스 ===
+def state_collector(result_queues, shared_state):
+    while True:
+        for q in result_queues:
+            try:
+                result = q.get_nowait()
+                shared_state.update(result)  # 최신 상태만 반영
+            except:
+                pass
+        import time
+        time.sleep(0.1)
+
+# === 멀티프로세스 워커 시작 ===
+def start_workers():
+    global inference_task_queue, inference_result_queue, overlay_task_queue, overlay_result_queue, shared_state
+    
+    # === 워커 풀 개수 지정 ===
+    NUM_INFER_WORKERS = 4
+    NUM_OVERLAY_WORKERS = 2
+
+    # === 워커 프로세스 및 상태 관리 프로세스 시작 ===
+    inf_procs = [mp.Process(target=inference_worker, args=(inference_task_queue, inference_result_queue, overlay_task_queue, shared_state)) for _ in range(NUM_INFER_WORKERS)]
+    ovl_procs = [mp.Process(target=overlay_worker, args=(overlay_task_queue, overlay_result_queue, shared_state)) for _ in range(NUM_OVERLAY_WORKERS)]
+    state_proc = mp.Process(target=state_collector, args=([inference_result_queue, overlay_result_queue], shared_state))
+    
+    for p in inf_procs + ovl_procs:
+        p.start()
+    state_proc.start()
+    
+    return inf_procs, ovl_procs, state_proc
+
 if __name__ == "__main__":
+    import debugpy
+    debugpy.listen(("0.0.0.0", 5678))
+    # debugpy.wait_for_client()
     import uvicorn
-    reset_inference_state()
-    uvicorn.run(app, host="0.0.0.0", port=10000, log_level="critical")
+    uvicorn.run(app, host="0.0.0.0", port=10000, log_level="critical", access_log=False)
