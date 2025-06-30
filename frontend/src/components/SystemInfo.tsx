@@ -56,6 +56,16 @@ const InfoCard = ({ title, value, unit, progress, color, secondaryText }: {
     );
 };
 
+function snakeToCamel(obj: any): any {
+  if (obj === null || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(snakeToCamel);
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [
+      k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()),
+      snakeToCamel(v),
+    ])
+  );
+}
 
 const SystemInfo: React.FC<SystemInfoProps> = ({ sx }) => {
   const [info, setInfo] = useState<SysInfo>({
@@ -86,15 +96,14 @@ const SystemInfo: React.FC<SystemInfoProps> = ({ sx }) => {
           setInfo(data);
         }
       } catch (error) {
-          console.error("시스템 정보 fetching 실패:", error);
+        console.error("시스템 정보 fetching 실패:", error);
       }
     };
-    
     fetchInfo();
     const timer = setInterval(fetchInfo, 2000);
     return () => clearInterval(timer);
   }, []);
-  
+
   const [gpuMemUsed, gpuMemTotal, gpuMemPercentage] = parseGpuMem(info.gpuMem);
 
   return (

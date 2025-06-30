@@ -8,6 +8,7 @@ RUN apt-get update && \
     ffmpeg libsm6 libxext6 libx264-dev libopenh264-dev wget git && \
     rm -rf /var/lib/apt/lists/*
 
+RUN ln -s /usr/bin/python3 /usr/bin/python
 WORKDIR /app
 
 COPY requirements.txt ./
@@ -17,4 +18,4 @@ COPY . /app
 
 EXPOSE 10000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000", "--log-level", "critical"] 
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000" ] 

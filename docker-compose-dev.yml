@@ -26,12 +26,22 @@ services:
     env_file:
       - .env
     restart: always
+    command:
+      [
+        "python",
+        "-m",
+        "debugpy",
+        "--listen",
+        "0.0.0.0:5678",
+        "--wait-for-client",
+        "main.py",
+      ]
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: builder # Use the 'builder' stage for development
+      target: builder
     container_name: video-frontend
     command: npm start
     ports:
