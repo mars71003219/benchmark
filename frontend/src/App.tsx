@@ -373,6 +373,25 @@ function App() {
     }),
   ];
 
+  // 단일 클립 진행률: events에서 type이 'progress_update'인 것 중 랜덤 1개
+  const progressEvents = Array.isArray(inferenceState?.events)
+    ? inferenceState.events.filter((ev: any) => ev.type === "progress_update")
+    : [];
+  const randomProgressEvent =
+    progressEvents.length > 0
+      ? progressEvents[Math.floor(Math.random() * progressEvents.length)]
+      : null;
+  const singleProgress =
+    randomProgressEvent && randomProgressEvent.total > 0
+      ? (randomProgressEvent.current / randomProgressEvent.total) * 100
+      : 0;
+
+  // 전체 비디오 진행률
+  const totalProgress =
+    inferenceState?.total_videos > 0
+      ? (videoFinalResults.length / inferenceState.total_videos) * 100
+      : 0;
+
   if (!inferenceState) {
     return (
       <ThemeProvider theme={theme}>
@@ -1504,13 +1523,21 @@ function App() {
                   >
                     {/* 진행바를 혼동행렬 위로 이동 */}
                     <Box sx={{ width: "100%", mb: 2 }}>
-                      <ProgressDisplay
-                        isInferencing={inferenceState.is_inferencing}
-                        currentVideo={inferenceState.current_video}
-                        currentProgress={inferenceState.current_progress}
-                        totalVideos={inferenceState.total_videos}
-                        processedVideos={inferenceState.processed_videos}
+                      <LinearProgress
+                        variant="determinate"
+                        value={singleProgress}
                       />
+                      <span>
+                        단일 클립 진행률: {singleProgress.toFixed(0)}%
+                      </span>
+                      <LinearProgress
+                        variant="determinate"
+                        value={totalProgress}
+                      />
+                      <span>
+                        전체 비디오 진행률: {videoFinalResults.length} /{" "}
+                        {inferenceState?.total_videos}
+                      </span>
                     </Box>
                     {/* Current Inferencing Video 및 텍스트 삭제 */}
                     {/* <Box sx={{ mt: 7 }}>
@@ -1586,7 +1613,7 @@ function App() {
               }}
             >
               <InferenceResultTable
-                events={inferenceState.events}
+                events={inferenceState.segment_results || []}
                 classLabels={classLabels}
               />
             </Box>

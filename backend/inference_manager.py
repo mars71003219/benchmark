@@ -155,7 +155,9 @@ class InferenceManager:
         self.video_results = {}  # 메인스레드에서만 관리
         # 비디오별 최종 결과 누적 리스트
         self.video_final_results = []
-        # 서버 시작 시 final_results.csv에서 복원
+        # 구간별 추론 결과 누적 리스트
+        self.segment_results = []
+        # 서버 시작 시 final_results.csv, results.csv에서 복원
         final_csv_path = self.results_dir / "final_results.csv"
         if final_csv_path.exists():
             try:
@@ -163,6 +165,13 @@ class InferenceManager:
                 self.video_final_results = df.to_dict(orient="records")
             except Exception:
                 self.video_final_results = []
+        results_csv_path = self.results_dir / "results.csv"
+        if results_csv_path.exists():
+            try:
+                df = pd.read_csv(results_csv_path)
+                self.segment_results = df.to_dict(orient="records")
+            except Exception:
+                self.segment_results = []
     
     def _create_worker_pool(self, model_cache_path: str, annotation_data: Optional[Dict] = None, mode: str = "AR"):
         """워커 프로세스 풀 생성 및 모델 로딩"""
@@ -311,6 +320,18 @@ class InferenceManager:
         # 메모리 누적 리스트에 갱신(동일 비디오 있으면 교체, 없으면 append)
         self.video_final_results = [r for r in self.video_final_results if r["video_name"] != video_name]
         self.video_final_results.append(row)
+        # 구간별 추론 결과 누적 (results: 구간별 리스트)
+        # 기존 비디오 구간 결과 삭제 후 append
+        self.segment_results = [r for r in self.segment_results if r.get("video_name") != video_name]
+        for seg in results:
+            self.segment_results.append(seg)
+        # results.csv에도 갱신
+        results_csv_path = self.results_dir / "results.csv"
+        try:
+            df = pd.DataFrame(self.segment_results)
+            df.to_csv(results_csv_path, index=False)
+        except Exception:
+            pass
         # final_results.csv에도 갱신
         final_csv_path = self.results_dir / "final_results.csv"
         try:
@@ -432,8 +453,9 @@ class InferenceManager:
                 return obj
             else:
                 return str(obj)
-        # video_final_results를 항상 반환
+        # video_final_results, segment_results를 항상 반환
         video_final_results = self.video_final_results
+        segment_results = self.segment_results
         completed_videos = [name for name, results in self.video_results.items() if results]
         results_summary = {}
         for name in completed_videos:
@@ -452,6 +474,7 @@ class InferenceManager:
             "processed_videos": self.PROCESSED_VIDEOS.value,
             "cumulative_accuracy": self.CUMULATIVE_ACCURACY.value,
             "video_final_results": video_final_results,
+            "segment_results": segment_results,
             "events": to_builtin(self.EVENTS),
             "results_summary": results_summary,
             "video_results": to_builtin(self.video_results),
