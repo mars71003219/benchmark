@@ -88,10 +88,6 @@ async def lifespan(app: FastAPI):
     total_videos = manager.Value('i', 0)
     processed_videos = manager.Value('i', 0)
     stop_flag = manager.Value('b', False)
-    video_states = manager.dict()
-    video_progress = manager.dict()
-    video_frames = manager.dict()
-    video_results = manager.dict()
     cumulative_accuracy = manager.Value('d', 0.0)
     metrics = manager.dict({
         "tp": 0, "tn": 0, "fp": 0, "fn": 0, 
@@ -109,12 +105,7 @@ async def lifespan(app: FastAPI):
         total_videos=total_videos,
         processed_videos=processed_videos,
         stop_flag=stop_flag,
-        video_states=video_states,
-        video_progress=video_progress,
-        video_frames=video_frames,
-        video_results=video_results,
         cumulative_accuracy=cumulative_accuracy,
-        metrics=metrics,
         events=events
     )
     app.state.nas_manager = NASManager(
@@ -148,13 +139,14 @@ async def start_inference_endpoint(request: Request):
     batch = data.get("batch", 16)
     annotation_data = data.get("annotation_data", {})
     model_id = data.get("model_id")
+    mode = data.get("mode", "AR")
     if not model_id:
         raise HTTPException(400, "model_id가 필요합니다.")
     video_files = sorted([p for p in UPLOAD_DIR.glob('*') if p.suffix in ['.mp4', '.avi', '.mov']])
     if not video_files:
         raise HTTPException(400, "업로드된 비디오가 없습니다.")
     inference_manager = request.app.state.inference_manager
-    inference_manager.start_inference(video_files, interval, infer_period, batch, model_id, annotation_data)
+    inference_manager.start_inference(video_files, interval, infer_period, batch, model_id, annotation_data, mode)
     return {"message": "추론이 백그라운드에서 시작되었습니다."}
 
 @app.post("/stop_infer")
@@ -274,10 +266,12 @@ async def get_nas_paths_endpoint():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket_manager.connect(websocket)
     try:
+        inference_manager = websocket.app.state.inference_manager
+        # 연결 직후 즉시 상태 push
+        await websocket.send_json(inference_manager.get_state())
         while True:
-            inference_manager = websocket.app.state.inference_manager
-            await websocket_manager.broadcast_state(inference_manager.get_state())
-            await asyncio.sleep(0.2)
+            await websocket.send_json(inference_manager.get_state())
+            await asyncio.sleep(1)
     except Exception:
         websocket_manager.disconnect(websocket)
 
@@ -320,6 +314,13 @@ async def get_overlay_video_endpoint(video_id: str):
 @app.get("/results.csv")
 async def get_results_csv_endpoint():
     path = RESULTS_DIR / "results.csv"
+    if not path.exists():
+        raise HTTPException(404, "파일 없음")
+    return FileResponse(path)
+
+@app.get("/final_results.csv")
+async def get_final_results_csv_endpoint():
+    path = RESULTS_DIR / "final_results.csv"
     if not path.exists():
         raise HTTPException(404, "파일 없음")
     return FileResponse(path)

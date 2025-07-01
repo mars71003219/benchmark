@@ -100,7 +100,7 @@ const SystemInfo: React.FC<SystemInfoProps> = ({ sx }) => {
       }
     };
     fetchInfo();
-    const timer = setInterval(fetchInfo, 2000);
+    const timer = setInterval(fetchInfo, 3000);
     return () => clearInterval(timer);
   }, []);
 

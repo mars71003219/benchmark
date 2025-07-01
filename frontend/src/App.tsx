@@ -53,6 +53,7 @@ import MetricsBarChart from "./components/MetricsBarChart";
 import VideoPlayer from "./components/VideoPlayer";
 import EventLog from "./components/EventLog";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Papa from "papaparse";
 
 const theme = createTheme({
   palette: {
@@ -129,15 +130,6 @@ function App() {
     "default"
   );
   const [annotationData, setAnnotationData] = useState<AnnotationData>({});
-  const [cumulativeAccuracyHistory, setCumulativeAccuracyHistory] = useState<
-    { processed_clips: number; accuracy: number }[]
-  >([]);
-  const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isAnnotationVideoMismatch, setIsAnnotationVideoMismatch] =
-    useState(false);
-  const [annotationAlertOpen, setAnnotationAlertOpen] = useState(false);
-  const [annotationSuccessOpen, setAnnotationSuccessOpen] = useState(false);
   const [selectedResultFile, setSelectedResultFile] = useState<File | null>(
     null
   );
@@ -164,6 +156,16 @@ function App() {
   const [showNasProgress, setShowNasProgress] = useState(false);
 
   const [minConsecutive, setMinConsecutive] = useState(3);
+
+  const [isPaused, setIsPaused] = useState(false);
+  const [isAnnotationVideoMismatch, setIsAnnotationVideoMismatch] =
+    useState(false);
+  const [annotationAlertOpen, setAnnotationAlertOpen] = useState(false);
+  const [annotationSuccessOpen, setAnnotationSuccessOpen] = useState(false);
+
+  const [initialVideoFinalResults, setInitialVideoFinalResults] = useState<
+    any[]
+  >([]);
 
   useEffect(() => {
     // 1. 현재 로드된 모델 정보
@@ -253,21 +255,6 @@ function App() {
   useEffect(() => {
     if (inferenceState) {
       setIsInferring(inferenceState!.is_inferencing);
-      if (
-        inferenceState.cumulative_accuracy !== undefined &&
-        inferenceState.processed_videos !== undefined
-      ) {
-        setCumulativeAccuracyHistory((prev) => [
-          ...prev,
-          {
-            processed_clips: inferenceState.processed_videos,
-            accuracy: inferenceState.cumulative_accuracy,
-          },
-        ]);
-      }
-      if (inferenceState.metrics !== undefined) {
-        setMetricsHistory((prev) => [...prev, inferenceState.metrics]);
-      }
     }
   }, [inferenceState]);
 
@@ -336,6 +323,55 @@ function App() {
       }
     };
   }, [showNasProgress]);
+
+  useEffect(() => {
+    // 새로고침 시 final_results.csv에서 복원
+    const fetchFinalResults = async () => {
+      try {
+        const res = await fetch("/final_results.csv");
+        if (!res.ok) return;
+        const text = await res.text();
+        const parsed = Papa.parse(text, { header: true });
+        setInitialVideoFinalResults(
+          (parsed.data as any[]).filter((r: any) => r.video_name)
+        );
+      } catch (e) {
+        setInitialVideoFinalResults([]);
+      }
+    };
+    fetchFinalResults();
+  }, []);
+
+  const videoFinalResults =
+    inferenceState?.video_final_results &&
+    inferenceState.video_final_results.length > 0
+      ? inferenceState.video_final_results
+      : initialVideoFinalResults;
+
+  const tp = videoFinalResults.filter((r: any) => r.metrics === "TP").length;
+  const tn = videoFinalResults.filter((r: any) => r.metrics === "TN").length;
+  const fp = videoFinalResults.filter((r: any) => r.metrics === "FP").length;
+  const fn = videoFinalResults.filter((r: any) => r.metrics === "FN").length;
+  const accuracy = (tp + tn) / (tp + tn + fp + fn) || 0;
+  const precision = tp / (tp + fp || 1);
+  const recall = tp / (tp + fn || 1);
+  const f1 =
+    precision + recall ? (2 * precision * recall) / (precision + recall) : 0;
+
+  const cumulativeAccuracyHistory = [
+    { processed_clips: 0, accuracy: 0 },
+    ...videoFinalResults.map((_: any, idx: number) => {
+      const partial = videoFinalResults.slice(0, idx + 1);
+      const tp_ = partial.filter((r: any) => r.metrics === "TP").length;
+      const tn_ = partial.filter((r: any) => r.metrics === "TN").length;
+      const fp_ = partial.filter((r: any) => r.metrics === "FP").length;
+      const fn_ = partial.filter((r: any) => r.metrics === "FN").length;
+      return {
+        processed_clips: idx + 1,
+        accuracy: (tp_ + tn_) / (tp_ + tn_ + fp_ + fn_ || 1),
+      };
+    }),
+  ];
 
   if (!inferenceState) {
     return (
@@ -489,8 +525,6 @@ function App() {
   };
 
   const handleStartInference = () => {
-    setCumulativeAccuracyHistory([]);
-    setMetricsHistory([]);
     const body = {
       interval: frameInterval,
       infer_period: inferPeriod,
@@ -1486,19 +1520,15 @@ function App() {
                                             </Typography>
                                         </Box> */}
                     <ConfusionMatrixDisplay
-                      metrics={
-                        metricsHistory.length > 0
-                          ? metricsHistory[metricsHistory.length - 1]
-                          : {
-                              tp: 0,
-                              tn: 0,
-                              fp: 0,
-                              fn: 0,
-                              precision: 0,
-                              recall: 0,
-                              f1_score: 0,
-                            }
-                      }
+                      metrics={{
+                        tp,
+                        tn,
+                        fp,
+                        fn,
+                        precision,
+                        recall,
+                        f1_score: f1,
+                      }}
                     />
                   </Grid>
 
@@ -1514,26 +1544,18 @@ function App() {
                     }}
                   >
                     <MetricsBarChart
-                      metrics={
-                        metricsHistory.length > 0
-                          ? metricsHistory[metricsHistory.length - 1]
-                          : {
-                              tp: 0,
-                              tn: 0,
-                              fp: 0,
-                              fn: 0,
-                              precision: 0,
-                              recall: 0,
-                              f1_score: 0,
-                            }
-                      }
+                      metrics={{
+                        tp,
+                        tn,
+                        fp,
+                        fn,
+                        precision,
+                        recall,
+                        f1_score: f1,
+                      }}
                     />
                     <CumulativeAccuracyGraph
-                      cumulativeAccuracyHistory={
-                        Array.isArray(cumulativeAccuracyHistory)
-                          ? cumulativeAccuracyHistory
-                          : []
-                      }
+                      cumulativeAccuracyHistory={cumulativeAccuracyHistory}
                     />
                   </Grid>
                 </Grid>
@@ -1579,21 +1601,7 @@ function App() {
                 minHeight: 0,
               }}
             >
-              <ConfusionMatrixGraph
-                metrics={
-                  inferenceState && inferenceState.metrics
-                    ? inferenceState.metrics
-                    : {
-                        tp: 0,
-                        tn: 0,
-                        fp: 0,
-                        fn: 0,
-                        precision: 0,
-                        recall: 0,
-                        f1_score: 0,
-                      }
-                }
-              />
+              <ConfusionMatrixGraph metrics={{ tp, tn, fp, fn }} />
             </Box>
           </Grid>
         </Grid>

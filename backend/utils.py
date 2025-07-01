@@ -268,7 +268,17 @@ def create_overlay_video(video_path: Path, results: List[Dict], output_path: Pat
 
 def create_results_csv(results: List[Dict], output_path: Path):
     if not results: return
-    df = pd.DataFrame(results)
+    # results를 flatten
+    flat_results = []
+    for item in results:
+        video_name = item.get('video_name')
+        for r in item.get('results', []):
+            r = r.copy()
+            r['video_name'] = video_name  # 혹시 내부에 없으면 추가
+            flat_results.append(r)
+    if not flat_results:
+        return
+    df = pd.DataFrame(flat_results)
     df_to_save = df[['video_name', 'start_time', 'end_time', 'prediction_label', 'start_frame', 'end_frame', 'inference_time_ms', 'inference_fps']]
     df_to_save.to_csv(output_path, index=False, float_format='%.2f')
 
